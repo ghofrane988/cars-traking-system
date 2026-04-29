@@ -1,0 +1,174 @@
+<aside class="sidebar" *ngIf="currentUser">
+
+  <!-- Profile Section -->
+  <div class="profile-section">
+    <div class="profile-avatar">
+      <!-- Default avatar image or initial -->
+      <img [src]="'https://ui-avatars.com/api/?name=' + currentUser.nom + '&background=e0e7ff&color=4f46e5'"
+        alt="Avatar" />
+    </div>
+    <div class="profile-info">
+      <span class="greeting">Bonjour 👋</span>
+      <h3 class="user-name">{{ currentUser.nom }}</h3>
+    </div>
+    <button class="expand-btn">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="menu-label">
+    <span>Menu</span>
+    <span class="badge-count">6</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a routerLink="/" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+          </path>
+        </svg>
+      </span>
+      <span class="label">Accueil</span>
+    </a>
+    <a [routerLink]="(isAdmin || isResponsable) ? '/admin/dashboard' : '/employee/dashboard'" routerLinkActive="active"
+      class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+          </path>
+        </svg>
+      </span>
+      <span class="label">Tableau de bord</span>
+    </a>
+
+    <!-- Management Links -->
+    <a *ngIf="isAdmin || isResponsable" routerLink="/vehicles" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+        </svg>
+      </span>
+      <span class="label">Véhicules</span>
+    </a>
+
+    <a *ngIf="isAdmin || isResponsable" routerLink="/reservations" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+      </span>
+      <span class="label">Réservations</span>
+    </a>
+
+    <a routerLink="/calendar" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+      </span>
+      <span class="label">{{ (isAdmin || isResponsable) ? 'Calendrier' : 'Mon Calendrier' }}</span>
+    </a>
+
+    <!-- Employees Link -->
+    <a *ngIf="isAdmin || isResponsable" routerLink="/admin/employees" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+          </path>
+        </svg>
+      </span>
+      <span class="label">Employés</span>
+    </a>
+
+    <!-- GPS Link -->
+    <a *ngIf="isAdmin || isResponsable" routerLink="/gps" routerLinkActive="active" class="nav-item">
+      <span class="icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
+          </path>
+        </svg>
+      </span>
+      <span class="label">GPS Suivi</span>
+    </a>
+
+    <!-- Plain Employee Links Removed Redundant History -->
+
+  </nav>
+
+  <!-- Service Sub-menu like in screenshot -->
+  <div *ngIf="isAdmin || isResponsable" class="service-section">
+    <div class="menu-label">
+      <span>Services</span>
+      <span class="badge-count">2</span>
+    </div>
+    <div class="card-menu">
+      <a routerLink="/admin/maintenances" routerLinkActive="active" class="card-item">
+        <span class="icon blue-bg">🔧</span>
+        <span class="label">Maintenances</span>
+      </a>
+      <a routerLink="/admin/trip-history" routerLinkActive="active" class="card-item">
+        <span class="icon green-bg">🗺️</span>
+        <span class="label">Trajets Historique</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- Settings Row like in screenshot -->
+  <div class="settings-bar">
+    <button class="setting-btn active"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+        </path>
+      </svg></button>
+    <app-notification-icon></app-notification-icon>
+    <button class="setting-btn" (click)="logout()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Big Create Button -->
+  <div class="create-task-card" *ngIf="!isAdmin && !isResponsable">
+    <button class="create-btn" routerLink="/nouvelle-reservation">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </button>
+    <div class="create-text">Nouvelle réservation</div>
+    <div class="create-subtext">Ou demandez <a href="#">un trajet</a></div>
+  </div>
+
+</aside>
+
+<!-- Modern Logout Confirmation Modal -->
+<div class="logout-modal-backdrop" *ngIf="showLogoutConfirm">
+  <div class="logout-modal-card">
+    <div class="modal-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+      </svg>
+    </div>
+    <h2>Confirmer la déconnexion</h2>
+    <p>Êtes-vous sûr de vouloir vous déconnecter de votre session ?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelLogout()">Annuler</button>
+      <button class="btn-confirm" (click)="confirmLogout()">Déconnexion</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="reservation-container">
+  <h1>🚗 Nouvelle Réservation</h1>
+
+  <form (ngSubmit)="onSubmit()" #reservationForm="ngForm">
+    <div class="form-grid">
+      <!-- Left Column: Form Fields -->
+      <div class="form-section">
+        <h3>📋 Informations Générales</h3>
+
+        <!-- Dates Selection -->
+        <div class="form-row side-by-side">
+          <div class="form-group">
+            <label>Date & Heure de début *</label>
+            <input type="datetime-local" [(ngModel)]="reservation.date_debut" name="date_debut" [min]="minDate"
+              required>
+          </div>
+          <div class="form-group">
+            <label>Date & Heure de fin (optionnel)</label>
+            <input type="datetime-local" [(ngModel)]="reservation.date_fin" name="date_fin"
+              [min]="reservation.date_debut || minDate">
+          </div>
+        </div>
+
+        <!-- Mission -->
+        <div class="form-group">
+          <label>Mission *</label>
+          <input type="text" [(ngModel)]="reservation.mission" name="mission" placeholder="Ex: Réunion client" required>
+        </div>
+
+        <!-- Destination Search -->
+        <div class="form-group">
+          <label>Rechercher Destination (Barre de recherche intelligente) 🔍</label>
+          <div class="search-dest-wrapper">
+            <input type="text" [(ngModel)]="searchDestTerm" name="searchDestTerm" (keyup.enter)="searchDestination()"
+              placeholder="Rechercher un lieu, ville, entreprise...">
+            <button type="button" (click)="searchDestination()" [disabled]="isSearchingDest">
+              {{ isSearchingDest ? '...' : 'Rechercher' }}
+            </button>
+          </div>
+          <small class="search-hint" *ngIf="reservation.destination">🎯 Lieu sélectionné: {{ reservation.destination
+            }}</small>
+        </div>
+
+        <div class="form-group">
+          <label>Destination (Adresse finale) *</label>
+          <input type="text" [(ngModel)]="reservation.destination" name="destination"
+            placeholder="Confirmation de l'adresse..." required>
+        </div>
+
+        <!-- Route Summary -->
+        <div class="route-summary" *ngIf="reservation.estimated_distance && reservation.estimated_distance > 0">
+          <h4>📍 Résumé du Trajet</h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="label">Distance estimée:</span>
+              <span class="value">{{ reservation.estimated_distance | number:'1.1-1' }} km</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Durée estimée:</span>
+              <span class="value">{{ getDurationText() }}</span>
+            </div>
+          </div>
+          <p class="map-hint">💡 Déplacez les marqueurs sur la carte pour ajuster le trajet</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Map -->
+      <div class="map-section">
+        <h3>🗺️ Sélectionner Départ & Arrivée</h3>
+        <div class="map-container">
+          <div #mapContainer class="map" style="height: 400px; min-height: 400px; background: #ddd; display: block;">
+          </div>
+          <div class="map-overlay" *ngIf="calculatingRoute">
+            <span>Calcul de l'itinéraire...</span>
+          </div>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item">
+            <span class="marker start">D</span>
+            <span>Point de départ (draggable)</span>
+          </div>
+          <div class="legend-item">
+            <span class="marker end">A</span>
+            <span>Point d'arrivée (draggable)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="resetForm()">Réinitialiser</button>
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        <span *ngIf="loading">Envoi...</span>
+        <span *ngIf="!loading">✅ Créer la Réservation</span>
+      </button>
+    </div>
+  </form>
+</div>

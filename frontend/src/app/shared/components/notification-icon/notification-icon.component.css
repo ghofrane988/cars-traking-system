@@ -1,0 +1,224 @@
+.notification-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* 🔔 Bell Button - Matching navbar .setting-btn style */
+.notification-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.notification-btn:hover {
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.notification-btn.active {
+  background: #f1f5f9;
+  color: #4f46e5;
+}
+
+.bell-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 🔴 Badge - Small red dot matching navbar style */
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  /* Hide text, just a dot in sidebar */
+  padding: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+/* 📋 Dropdown - Modernized */
+.notification-dropdown {
+  position: fixed;
+  bottom: 80px;
+  /* Position above the settings bar in sidebar */
+  left: 20px;
+  width: 320px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 10001;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-header h4 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mark-all-btn {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.mark-all-btn:hover {
+  background: #eef2ff;
+}
+
+/* 📜 Notification List */
+.notification-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #f0f7ff;
+}
+
+.notification-item.unread::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #4f46e5;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.message {
+  margin: 0 0 6px 0;
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #4f46e5;
+  border-radius: 50%;
+  margin-top: 5px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* 🌫️ Backdrop */
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(2px);
+}
+
+.close-dropdown {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.close-dropdown:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Custom Scrollbar */
+.notification-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
+}

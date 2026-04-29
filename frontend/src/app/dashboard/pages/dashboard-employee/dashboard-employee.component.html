@@ -1,0 +1,264 @@
+<div class="dashboard-container">
+  <!-- 👤 Header & Profil -->
+  <div class="header-section">
+    <div class="welcome-text">
+      <h1>Bonjour, {{ currentUser?.nom }} 👋</h1>
+      <p class="subtitle">Voici l'état de vos activités et réservations</p>
+    </div>
+    <div class="header-actions">
+      <button routerLink="/nouvelle-reservation" class="btn-new-res">+ Nouvelle Réservation</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement de vos données...</p>
+  </div>
+
+  <div *ngIf="error" class="error-alert">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && dashboardData" class="dashboard-content">
+
+    <!-- 📊 Statistiques -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon blue">📋</span>
+        <div class="stat-info">
+          <span class="stat-value">{{ dashboardData.my_reservations.total }}</span>
+          <span class="stat-label">Total Missions</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon orange">⏳</span>
+        <div class="stat-info">
+          <span class="stat-value">{{ dashboardData.my_reservations.pending }}</span>
+          <span class="stat-label">En Attente</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon green">✅</span>
+        <div class="stat-info">
+          <span class="stat-value">{{ dashboardData.my_reservations.approved }}</span>
+          <span class="stat-label">Approuvées</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon red">❌</span>
+        <div class="stat-info">
+          <span class="stat-value">{{ dashboardData.my_reservations.rejected }}</span>
+          <span class="stat-label">Refusées</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🚗 Réservation Active (Highlight) -->
+    <div *ngIf="dashboardData.active_reservation" class="active-mission-card">
+      <div class="card-header">
+        <span class="live-badge">EN COURS</span>
+        <h2>Véhicule en votre possession</h2>
+      </div>
+      <div class="mission-layout">
+        <div class="vehicle-info">
+          <div class="vehicle-icon">🚗</div>
+          <div class="vehicle-meta">
+            <h3>{{ dashboardData.active_reservation.vehicle?.marque }} {{
+              dashboardData.active_reservation.vehicle?.modele }}</h3>
+            <p class="plate">{{ dashboardData.active_reservation.vehicle?.matricule }}</p>
+          </div>
+        </div>
+        <div class="mission-details">
+          <p><strong>Mission:</strong> {{ dashboardData.active_reservation.mission }}</p>
+          <p><strong>Période:</strong> {{ dashboardData.active_reservation.date_debut | date:'dd/MM HH:mm' }} - En cours
+          </p>
+        </div>
+        <button class="btn-return" (click)="onMissionComplete()">
+          ✓ Terminer la mission
+        </button>
+      </div>
+    </div>
+
+    <!-- 🔄 Confirmation Modal -->
+    <div *ngIf="showConfirmDialog" class="modal-overlay" (click)="cancelReturn()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-icon">🚩</div>
+        <h3>Fin de mission</h3>
+        <p>Merci de renseigner le kilométrage final du véhicule <strong>{{
+            dashboardData.active_reservation?.vehicle?.matricule }}</strong> pour clôturer la session.</p>
+
+        <div class="form-group">
+          <label>Kilométrage final (km)</label>
+          <input type="number" [(ngModel)]="kmFin" placeholder="Ex: 12540" required />
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" (click)="cancelReturn()">Annuler</button>
+          <button class="btn-confirm" (click)="confirmReturn()" [disabled]="!kmFin">Valider le retour</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📜 Historique Complet (Fusionné) -->
+    <div class="history-section">
+      <div class="section-header">
+        <h2>📜 Historique des Réservations</h2>
+        <div class="filters">
+          <!-- Possibilité d'ajouter des filtres ici plus tard -->
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Date Demande</th>
+              <th>Mission / Destination</th>
+              <th>Période prévue</th>
+              <th>Véhicule</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let res of reservations" (click)="viewDetails(res)" class="clickable-row">
+              <td>{{ res.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <div class="mission-cell">
+                  <span class="m-title">{{ res.mission }}</span>
+                  <span class="m-dest" *ngIf="res.destination">📍 {{ res.destination }}</span>
+                </div>
+              </td>
+              <td>{{ res.date_debut | date:'dd/MM HH:mm' }} <span *ngIf="res.date_fin">→ {{ res.date_fin | date:'dd/MM
+                  HH:mm'
+                  }}</span></td>
+              <td>
+                <span *ngIf="res.vehicle" class="v-tag">{{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</span>
+                <span *ngIf="!res.vehicle" class="no-v">Attente affectation</span>
+              </td>
+              <td>
+                <span class="status-pill" [class]="getStatusClass(res.status)">
+                  {{ getStatusLabel(res.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="reservations.length === 0" class="empty-history">
+          <p>Vous n'avez pas encore effectué de réservation.</p>
+          <button routerLink="/nouvelle-reservation" class="btn-link">Faire ma première demande</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 📋 MODAL: DÉTAILS DE LA RÉSERVATION -->
+<div class="modal-overlay" *ngIf="showDetailModal" (click)="closeModal()">
+  <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-main">
+        <h3>📋 Détails de la Réservation</h3>
+        <span class="status-badge" [class]="getStatusClass(selectedReservation?.status)">
+          {{ getStatusLabel(selectedReservation?.status) }}
+        </span>
+      </div>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- STATIC DETAILS -->
+      <div class="details-grid" *ngIf="!editMode">
+        <div class="detail-item full">
+          <label>Missions</label>
+          <p class="val">{{ selectedReservation?.mission }}</p>
+        </div>
+        <div class="detail-item">
+          <label>Date début</label>
+          <p class="val">{{ selectedReservation?.date_debut | date:'dd MMMM yyyy à HH:mm':'':'fr' }}</p>
+        </div>
+        <div class="detail-item">
+          <label>Date fin prévue</label>
+          <p class="val">{{ selectedReservation?.date_fin ? (selectedReservation?.date_fin | date:'dd MMMM yyyy à
+            HH:mm':'':'fr') : 'Non définie' }}</p>
+        </div>
+        <div class="detail-item full" *ngIf="selectedReservation?.destination">
+          <label>Destination</label>
+          <p class="val">📍 {{ selectedReservation?.destination }}</p>
+        </div>
+        <div class="detail-item full" *ngIf="selectedReservation?.vehicle">
+          <label>Véhicule Assigné</label>
+          <div class="v-card">
+            <span class="v-icon">🚗</span>
+            <div class="v-text">
+              <strong>{{ selectedReservation.vehicle.marque }} {{ selectedReservation.vehicle.modele }}</strong>
+              <small>{{ selectedReservation.vehicle.matricule }}</small>
+            </div>
+          </div>
+        </div>
+        <div class="detail-item full" *ngIf="selectedReservation?.cancellation_reason">
+          <label>Commentaire / Raison</label>
+          <p class="reason-val">{{ selectedReservation.cancellation_reason }}</p>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <div class="edit-form" *ngIf="editMode">
+        <div class="form-group">
+          <label>Missions</label>
+          <textarea [(ngModel)]="editData.mission" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date début</label>
+            <input type="datetime-local" [(ngModel)]="editData.date_debut">
+          </div>
+          <div class="form-group">
+            <label>Date fin</label>
+            <input type="datetime-local" [(ngModel)]="editData.date_fin">
+          </div>
+        </div>
+      </div>
+
+      <!-- CANCEL MODE (Reason field) -->
+      <div class="cancel-reason-form" *ngIf="cancelMode">
+        <div class="form-group">
+          <label>Pourquoi voulez-vous annuler ? (Facultatif)</label>
+          <textarea [(ngModel)]="cancelReason" placeholder="Ex: Changement de planning..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL FOOTER ACTIONS -->
+    <div class="modal-footer">
+      <!-- Default View Actions -->
+      <ng-container *ngIf="!editMode && !cancelMode">
+        <button class="btn-outline" (click)="closeModal()">Fermer</button>
+        <button class="btn-edit" *ngIf="selectedReservation?.status === 'pending'" (click)="toggleEdit()">
+          ✏️ Modifier
+        </button>
+        <button class="btn-cancel-action"
+          *ngIf="selectedReservation?.status === 'pending' || selectedReservation?.status === 'approved'"
+          (click)="toggleCancel()">
+          🚫 Annuler
+        </button>
+      </ng-container>
+
+      <!-- Edit Actions -->
+      <ng-container *ngIf="editMode">
+        <button class="btn-outline" (click)="toggleEdit()">Annuler</button>
+        <button class="btn-primary" (click)="saveUpdate()" [disabled]="loading">
+          {{ loading ? '...' : 'Enregistrer les modifications' }}
+        </button>
+      </ng-container>
+
+      <!-- Cancel Confirm Actions -->
+      <ng-container *ngIf="cancelMode">
+        <button class="btn-outline" (click)="toggleCancel()">Retour</button>
+        <button class="btn-danger" (click)="confirmCancel()" [disabled]="loading">
+          {{ loading ? '...' : 'Confirmer l\'annulation' }}
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>

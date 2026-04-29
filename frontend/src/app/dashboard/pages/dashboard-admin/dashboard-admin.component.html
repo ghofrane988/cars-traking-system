@@ -1,0 +1,218 @@
+<div class="dashboard-wrapper">
+
+  <!-- Left Main Content -->
+  <div class="main-content">
+    <div class="header-row">
+      <h1 class="page-title">Tableau de bord</h1>
+      <div class="header-actions">
+        <div class="search-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg></div>
+        <button class="btn-config-parking" (click)="openParkingModal()" title="Configurer le parking"
+          *ngIf="isAdminOnly">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
+            </path>
+          </svg>
+        </button>
+        <app-notification-icon></app-notification-icon>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading">Chargement...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div *ngIf="!loading && dashboardData" class="content-scroll">
+
+      <!-- Gradient Cards mimicking screenshot courses -->
+      <div class="gradient-cards">
+        <div class="g-card purple">
+          <div class="g-card-content">
+            <h3>Parc Véhicules</h3>
+            <p>Total: {{ dashboardData.vehicles.total }} | Disponibles: {{ dashboardData.vehicles.disponible }}</p>
+            <div class="g-creator">Véhicules de la société</div>
+          </div>
+          <div class="g-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="g-card pink">
+          <div class="g-card-content">
+            <h3>Réservations Actuelles</h3>
+            <p>{{ dashboardData.reservations.pending }} en attente, {{ dashboardData.reservations.approved }}
+              approuvées.</p>
+            <div class="g-creator">A valider / En cours</div>
+          </div>
+          <div class="g-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="g-card light-pink">
+          <div class="g-card-content">
+            <h3>Alertes Maintenance</h3>
+            <p>{{ dashboardData.vehicles.maintenance }} véhicules en maintenance, {{ dashboardData.vehicles.panne }} en
+              panne.</p>
+            <div class="g-creator">Nécessite intervention</div>
+          </div>
+          <div class="g-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+              </path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-section">
+        <h2 class="section-title">Aperçu Général</h2>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <canvas #reservationsChart></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas #vehiclesChart></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tables Section -->
+      <div *ngIf="dashboardData.pending_reservations.length > 0" class="section-block">
+        <h2 class="section-title">Réservations en attente</h2>
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Employé</th>
+              <th>Mission</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let res of dashboardData.pending_reservations">
+              <td>{{ res.employee?.nom }}</td>
+              <td>{{ res.mission }}</td>
+              <td><a routerLink="/reservations" [queryParams]="{filter: 'pending', focus: res.id}"
+                  class="action-link">Valider →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <aside class="right-sidebar">
+
+    <!-- Calendar Widget -->
+    <div class="calendar-widget">
+      <div class="calendar-header">
+        <h3 class="month-title">{{ currentMonthStr | titlecase }}</h3>
+        <div class="nav-arrows">
+          <button>&lt;</button>
+          <button>&gt;</button>
+        </div>
+      </div>
+      <div class="calendar-grid days-labels">
+        <span>Lun</span><span>Mar</span><span>Mer</span>
+        <span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+      </div>
+      <div class="calendar-grid days">
+        <span *ngFor="let day of calendarDays" class="day" [class.highlight]="reservedDates.has(day)"
+          [class.today]="day === currentDate.getDate()">
+          {{ day }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Employees List -->
+    <div class="employees-widget">
+      <div class="widget-header">
+        <h3>Employés Récents</h3>
+        <a routerLink="/admin/employees" class="see-all">Voir tout</a>
+      </div>
+
+      <div class="employee-list">
+        <div class="employee-item" *ngFor="let emp of employees">
+          <div class="emp-avatar">
+            <img [src]="'https://ui-avatars.com/api/?name=' + emp.nom + '&background=e0e7ff&color=4f46e5'" alt="Avatar">
+          </div>
+          <div class="emp-info">
+            <h4>{{ emp.nom }}</h4>
+          </div>
+          <div class="emp-status dot-purple"></div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- 🏢 MODAL: Configuration Parking -->
+<div class="modal-overlay" *ngIf="showParkingModal" (click)="closeParkingModal()">
+  <div class="modal-card parking-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="title-with-icon">
+        <span class="icon-bg">🏢</span>
+        <h3>Localisation du Parking</h3>
+      </div>
+      <button class="close-btn" (click)="closeParkingModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="instruction-text">
+        Configurez l'emplacement central de l'entreprise. Ce point sera utilisé comme **départ par défaut** pour toutes
+        les réservations.
+      </p>
+
+      <!-- Search Bar -->
+      <div class="search-box">
+        <div class="search-input-wrapper">
+          <input type="text" [(ngModel)]="searchAddress" (keyup.enter)="searchLocation()"
+            placeholder="Rechercher une adresse (ex: Tunis, Tunisia)..." />
+          <button (click)="searchLocation()" [disabled]="isSearchingAddress">
+            {{ isSearchingAddress ? '...' : '🔍' }}
+          </button>
+        </div>
+        <small class="hint" *ngIf="parkingSettings.parking_address">📍 {{ parkingSettings.parking_address }}</small>
+      </div>
+
+      <!-- Map Container -->
+      <div class="map-wrapper">
+        <div #parkingMapContainer class="map-container-small"></div>
+        <div class="map-overlay-hint">Cliquez sur la carte ou déplacez le marqueur</div>
+      </div>
+
+      <div class="coords-display">
+        <div class="coord-item">
+          <span class="label">Latitude</span>
+          <span class="value">{{ parkingSettings.parking_lat | number:'1.6-6' }}</span>
+        </div>
+        <div class="coord-item">
+          <span class="label">Longitude</span>
+          <span class="value">{{ parkingSettings.parking_lng | number:'1.6-6' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeParkingModal()">Annuler</button>
+      <button class="btn-save" (click)="saveParkingSettings()">
+        ✅ Enregistrer la position
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevents flex children from overflowing */
+    height: 100vh;
+    overflow-y: auto;
+    background-color: #f4f7fe;
+    /* Light background matching the screenshot */
+}

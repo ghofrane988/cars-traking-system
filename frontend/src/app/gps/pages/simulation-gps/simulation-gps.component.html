@@ -1,0 +1,87 @@
+<div class="live-tracking-container borderless-mode">
+  <!-- 🔔 Alert Banner (Floating) -->
+  <div *ngIf="alert" class="alert-banner floating-alert" [class.warning]="alert.severity === 'warning'"
+    [class.info]="alert.severity === 'info'">
+    <span class="alert-icon">{{ alert.severity === 'warning' ? '⚠️' : 'ℹ️' }}</span>
+    <span class="alert-message">{{ alert.message }}</span>
+    <button class="alert-close" (click)="dismissAlert()">×</button>
+  </div>
+
+  <!-- 🗺️ Main Layout: Map + Sidebar -->
+  <div class="tracking-layout">
+    
+    <!-- Left: Pure Map Section -->
+    <div class="map-section pure-map">
+      <div #mapContainer class="map-container pure-map-container"></div>
+    </div>
+
+    <!-- Right: Sidebar for Everything -->
+    <div class="sidebar-section floating-sidebar">
+      <!-- 🚗 Header -->
+      <div class="sidebar-header">
+        <div class="tracking-header-compact">
+          <h2>🚗 Live GPS</h2>
+          <div class="status-indicator" [class.active]="isTracking">
+            <span class="status-dot"></span>
+            {{ isTracking ? 'Actif' : 'Inactif' }}
+          </div>
+        </div>
+        <p class="text-sm text-gray-500" style="margin-top: 5px;">Sélectionnez une mission pour le suivi</p>
+      </div>
+
+      <!-- Live Metrics (Shows only when tracking) -->
+      <div *ngIf="currentPosition" class="live-metrics-panel">
+        <div class="live-metric">
+          <span class="lm-icon">⚡</span>
+          <div>
+            <div class="lm-val">{{ currentPosition.position.speed | number:'1.0-0' }}</div>
+            <div class="lm-lbl">km/h</div>
+          </div>
+        </div>
+        <div class="live-metric">
+          <span class="lm-icon">📏</span>
+          <div>
+            <div class="lm-val">{{ currentPosition.position.distance_cumulative | number:'1.1-1' }}</div>
+            <div class="lm-lbl">km parcourus</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reservations List -->
+      <div class="reservation-list">
+        <div *ngIf="isLoading" class="loading">Chargement...</div>
+        <div *ngIf="!isLoading && activeReservations.length === 0" class="no-data">
+          Aucune réservation active pour le moment.
+        </div>
+
+        <!-- Reservation Cards -->
+        <div *ngFor="let res of activeReservations" 
+             class="reservation-card" 
+             [class.selected]="currentReservation?.id === res.id"
+             (click)="selectReservation(res)">
+             
+          <div class="res-card-header">
+            <span class="res-employee">👤 {{ res.employee.nom }}</span>
+            <span class="res-status" [class.in-progress]="res.status === 'in_progress'">
+              {{ res.status === 'in_progress' ? 'En Route' : 'Prête' }}
+            </span>
+          </div>
+          
+          <div class="res-mission">🎯 {{ res.mission }}</div>
+          
+          <div class="res-details">
+            <div class="res-vehicle">🚗 {{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</div>
+            <div class="res-time">⏱️ {{ res.date_debut | date:'HH:mm' }}</div>
+          </div>
+
+          <!-- Action when selected -->
+          <div class="res-actions" *ngIf="currentReservation?.id === res.id">
+            <button class="btn btn-danger" style="width: 100%; margin-top: 15px;" (click)="finishMission(); $event.stopPropagation()">
+              ✅ Terminer la mission
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

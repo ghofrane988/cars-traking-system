@@ -1,0 +1,144 @@
+.trip-history-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+}
+
+.content:has(.map-section) {
+  grid-template-columns: 1fr 1fr;
+}
+
+.trips-list {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.trips-list.compact {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.trips-list h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+}
+
+.table tr:hover {
+  background: #f8f9fa;
+}
+
+.btn-view {
+  padding: 8px 16px;
+  background: #6a1b9a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.btn-view:hover {
+  background: #4a148c;
+  transform: translateY(-1px);
+}
+
+.no-data {
+  text-align: center;
+  color: #666;
+  padding: 40px;
+}
+
+.map-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+}
+
+.map-section app-map {
+  display: block;
+  height: 100%;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.map-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.map-header small {
+  display: block;
+  color: #666;
+  font-weight: normal;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 5px;
+  line-height: 1;
+}
+
+.btn-close:hover {
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .content:has(.map-section) {
+    grid-template-columns: 1fr;
+  }
+}

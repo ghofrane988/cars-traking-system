@@ -1,0 +1,252 @@
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/assets/login-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+}
+
+.auth-card {
+  display: flex;
+  background: white;
+  border-radius: 40px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1100px;
+  min-height: 700px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Left Section: Form */
+.auth-form-side {
+  flex: 1;
+  padding: 60px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.auth-logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2d6a4f;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 30px;
+  line-height: 1.2;
+}
+
+.social-auth {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.social-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  border: none;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.social-btn:hover {
+  background: #e5e5e5;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 25px;
+  color: #888;
+  font-size: 14px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+
+.divider span {
+  padding: 0 15px;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 350px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.input-field {
+  width: 100%;
+  padding: 16px 24px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 30px;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+  transition: background 0.3s;
+}
+
+.input-field:focus {
+  background: #ececec;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 20px;
+  color: #888;
+  cursor: pointer;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 16px;
+  background: #2d6a4f;
+  /* Dark green from image */
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+  margin-top: 10px;
+}
+
+.btn-submit:hover {
+  opacity: 0.9;
+}
+
+.btn-submit:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+.auth-footer {
+  margin-top: 30px;
+  font-size: 14px;
+  color: #666;
+}
+
+.auth-footer a {
+  color: #1a1a1a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.error-msg {
+  color: #d90429;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* Right Section: Image */
+.auth-image-side {
+  flex: 1.2;
+  position: relative;
+  padding: 20px;
+  display: flex;
+}
+
+.inner-image-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  background-image: url('/assets/login-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+/* Overlays mimicking the photo */
+.overlay-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  border-radius: 20px;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-1 {
+  top: 30%;
+  left: 15%;
+}
+
+.card-2 {
+  top: 40%;
+  right: 10%;
+  width: 180px;
+}
+
+.card-3 {
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.overlay-card h4 {
+  font-size: 14px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.overlay-card p {
+  font-size: 11px;
+  margin: 4px 0 0 0;
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .auth-image-side {
+    display: none;
+  }
+
+  .auth-card {
+    max-width: 500px;
+  }
+}

@@ -1,0 +1,342 @@
+﻿<div class="reservation-container" [class.full-screen]="viewMode === 'calendar' || isAdmin">
+
+  <!-- Header Section mirroring modern dashboard style -->
+  <div class="header">
+    <div class="header-title-area">
+      <h1 *ngIf="viewMode !== 'calendar'">{{ isAdmin ? 'Gestion des Réservations' : 'Mes Réservations' }}</h1>
+      <h1 *ngIf="viewMode === 'calendar'">Calendrier des Réservations</h1>
+      <p class="subtitle" *ngIf="!isAdmin && viewMode !== 'calendar'">Gérez vos demandes de déplacement en temps réel
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <div class="view-toggle-modern">
+        <button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" class="toggle-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          Liste
+        </button>
+        <button [class.active]="viewMode === 'calendar'" (click)="setViewMode('calendar')" class="toggle-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Calendrier
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+  <div class="loading" *ngIf="loading">Chargement...</div>
+
+  <!-- 📝 Formulaire de Réservation avec Carte (Employé seulement) -->
+  <div class="reservation-form-section" *ngIf="!isAdmin && !loading && viewMode === 'list'">
+    <h3>📝 Nouvelle Demande de Réservation</h3>
+    <form (ngSubmit)="createReservation()" class="reservation-form-with-map">
+      <div class="form-map-grid">
+        <div class="form-fields">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date et heure de début *</label>
+              <input type="datetime-local" [(ngModel)]="newReservation.date_debut" name="date_debut" required>
+            </div>
+            <div class="form-group">
+              <label>Date et heure de fin (optionnel)</label>
+              <input type="datetime-local" [(ngModel)]="newReservation.date_fin" name="date_fin">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Mission / Objectif *</label>
+            <textarea [(ngModel)]="newReservation.mission" name="mission" rows="3"
+              placeholder="Décrivez votre mission..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Rechercher Destination 🔍</label>
+            <div class="search-dest-wrapper">
+              <input type="text" [(ngModel)]="searchDestTerm" name="searchDestTerm" (keyup.enter)="searchDestination()"
+                placeholder="Rechercher un lieu...">
+              <button type="button" (click)="searchDestination()" [disabled]="isSearchingDest">{{ isSearchingDest ?
+                '...' : 'Rechercher' }}</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Destination (Adresse finale) *</label>
+            <input type="text" [(ngModel)]="newReservation.destination" name="destination"
+              placeholder="Confirmation de l'adresse..." required>
+          </div>
+          <div class="route-summary" *ngIf="newReservation.estimated_distance && newReservation.estimated_distance > 0">
+            <h4>📍 Résumé du Trajet</h4>
+            <div class="summary-grid">
+              <div class="summary-item"><span class="label">Distance:</span><span class="value">{{
+                  newReservation.estimated_distance | number:'1.1-1' }} km</span></div>
+              <div class="summary-item"><span class="label">Durée:</span><span class="value">{{ getDurationText()
+                  }}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="map-section">
+          <div class="map-container">
+            <div #mapContainer class="map"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="!newReservation.date_debut || !newReservation.mission">📤
+          Envoyer la demande</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 📋 Mes Réservations En Attente (Employé) - Sidebar Style or Grid -->
+  <!-- Skip refactoring for employee for now to focus on Admin request -->
+
+  <!-- 👨‍💼 MODERN ADMIN LAYOUT WITH SIDEBAR FILTERS -->
+  <div class="admin-page-layout" *ngIf="isAdmin && !loading && viewMode === 'list'">
+
+    <!-- Left: Data Table -->
+    <div class="main-content">
+      <div class="card-body">
+        <div class="card-header-simple">
+          <h2>Liste des réservations</h2>
+          <div class="results-count" *ngIf="searchTerm || hasActiveFilters()">
+            {{ filteredReservations.length }} résultat(s) trouvé(s)
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="members-table">
+            <thead>
+              <tr>
+                <th>Véhicule</th>
+                <th>Employé</th>
+                <th>Dates</th>
+                <th>Mission</th>
+                <th>Statut</th>
+                <th style="text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of filteredReservations">
+                <td>
+                  <div class="vehicle-cell">
+                    <span class="v-name" *ngIf="r.vehicle">{{ r.vehicle.marque }} {{ r.vehicle.modele }}</span>
+                    <span class="v-plate" *ngIf="r.vehicle">{{ r.vehicle.matricule }}</span>
+                    <span *ngIf="!r.vehicle" class="no-vehicle">Non assigné</span>
+                  </div>
+                </td>
+                <td class="col-name">{{ r.employee?.nom }}</td>
+                <td class="col-text">
+                  <div class="date-cell">
+                    <span>{{ r.date_debut | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <small *ngIf="r.date_fin">➔ {{ r.date_fin | date:'dd/MM/yyyy HH:mm' }}</small>
+                  </div>
+                </td>
+                <td class="col-text mission-cell" [title]="r.mission">{{ r.mission }}</td>
+                <td>
+                  <span class="status-pill" [class]="r.status">
+                    {{ getStatusLabel(r.status) }}
+                  </span>
+                </td>
+                <td class="col-operation">
+                  <!-- Actions icons from vehicle list style -->
+                  <ng-container *ngIf="r.status === 'pending'">
+                    <button class="icon-btn success" (click)="approveReservation(r)" title="Approuver"><svg
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg></button>
+                    <button class="icon-btn danger" (click)="rejectReservation(r)" title="Refuser"><svg
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg></button>
+                  </ng-container>
+
+                  <ng-container *ngIf="r.status === 'approved' && !hasStarted(r)">
+                    <button class="icon-btn success" (click)="approveReservation(r)" title="Modifier véhicule">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="icon-btn danger" (click)="cancelReservation(r.id!)" title="Annuler">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </ng-container>
+
+                  <button class="icon-btn grey" (click)="deleteReservation(r.id!)" title="Supprimer"
+                    *ngIf="isSuperAdmin">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="empty-state" *ngIf="filteredReservations.length === 0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>Aucune réservation ne correspond à vos critères.</p>
+            <button class="btn-text" (click)="resetFilters()">Réinitialiser les filtres</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Sidebar Filters -->
+    <div class="sidebar-filters">
+      <div class="filter-card">
+        <div class="filter-group">
+          <label>Recherche globale</label>
+          <div class="search-box">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" placeholder="Mission, employé..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>Statut</label>
+          <select [(ngModel)]="filterStatus" (change)="onSearch()" class="modern-select">
+            <option value="">Tous les statuts</option>
+            <option value="pending">En attente</option>
+            <option value="approved">Approuvée</option>
+            <option value="in_progress">En cours</option>
+            <option value="completed">Terminée</option>
+            <option value="rejected">Refusée</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Période</label>
+          <div class="date-range">
+            <input type="date" [(ngModel)]="filterDateDebut" (change)="onSearch()" placeholder="Début">
+            <input type="date" [(ngModel)]="filterDateFin" (change)="onSearch()" placeholder="Fin">
+          </div>
+        </div>
+
+        <button class="btn-clear-filters" (click)="resetFilters()" *ngIf="hasActiveFilters()">
+          Effacer tous les filtres
+        </button>
+      </div>
+
+      <!-- Quick Access Actions -->
+      <div class="actions-card" *ngIf="isAdmin">
+        <h3>Actions rapides</h3>
+        <button class="btn btn-purple full-width" routerLink="/nouvelle-reservation">Nouvelle réservation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Calendrier Moderne -->
+  <div class="calendar-view-container" *ngIf="!loading && viewMode === 'calendar'">
+    <app-fleet-calendar [events]="calendarReservations"></app-fleet-calendar>
+  </div>
+
+</div>
+
+<!-- 🚗 MODAL: Affectation Véhicule (Admin) -->
+<div class="modal-overlay" *ngIf="showAssignModal" (click)="closeAssignModal()">
+  <div class="modal-content assign-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🚗 Affecter un Véhicule</h3>
+      <button class="close-btn" (click)="closeAssignModal()">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedReservation">
+      <div class="trip-info">
+        <h4>📋 Récapitulatif de la Mission</h4>
+        <p><strong>{{ selectedReservation.mission }}</strong></p>
+        <p>👤 Employé: {{ selectedReservation.employee?.nom }}</p>
+        <p *ngIf="selectedReservation.vehicle">🚗 Véhicule actuel: <strong>{{ selectedReservation.vehicle.marque }} {{
+            selectedReservation.vehicle.modele }}</strong></p>
+        <p>📅 {{ selectedReservation.date_debut | date:'dd/MM/yyyy HH:mm' }} <span
+            *ngIf="selectedReservation.date_fin">➔ {{
+            selectedReservation.date_fin | date:'dd/MM/yyyy HH:mm' }}</span></p>
+        <div class="route-badge" *ngIf="selectedReservation.estimated_distance">
+          📍 Distance estimée: {{ selectedReservation.estimated_distance | number:'1.1-1' }} km
+        </div>
+      </div>
+
+      <div class="assign-grid">
+        <!-- Left: Map -->
+        <div class="map-section">
+          <div class="map-container assign-map">
+            <div #assignMapContainer class="map"></div>
+          </div>
+        </div>
+
+        <!-- Right: Vehicle Selection List -->
+        <div class="vehicle-section">
+          <h4>⛽ Véhicules Disponibles</h4>
+          <div class="vehicle-list">
+            <div class="vehicle-card" *ngFor="let v of availableVehicles"
+              [class.selected]="selectedVehicle?.id === v.id" (click)="selectVehicle(v)">
+              <div class="v-header">
+                <span class="v-name">{{ v.marque }} {{ v.modele }}</span>
+                <span class="v-plate">{{ v.matricule }}</span>
+              </div>
+              <div class="v-details">
+                <span>⛽ {{ v.type_carburant || 'Diesel' }}</span>
+                <span class="v-cons">{{ v.consommation }} L/100</span>
+              </div>
+            </div>
+          </div>
+          <div class="no-vehicles" *ngIf="availableVehicles.length === 0">
+            Aucun véhicule disponible pour cette période.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeAssignModal()">Annuler</button>
+      <button class="btn btn-purple" [disabled]="!selectedVehicle" (click)="confirmAssignVehicle()">
+        ✅ Confirmer l'affectation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 🚫 MODAL: Annulation / Rejet avec Commentaire -->
+<div class="modal-overlay" *ngIf="showCancelModal" (click)="closeCancelModal()">
+  <div class="modal-content cancel-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header reject-bg" *ngIf="cancelMode === 'reject'">
+      <h3>Refuser la réservation</h3>
+      <button class="close-btn" (click)="closeCancelModal()">×</button>
+    </div>
+    <div class="modal-header cancel-bg" *ngIf="cancelMode === 'cancel'">
+      <h3>Annuler la réservation</h3>
+      <button class="close-btn" (click)="closeCancelModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p>Mission: <strong>{{ reservationToCancel?.mission }}</strong></p>
+      <div class="form-group">
+        <label>Motif de la décision (optionnel)</label>
+        <textarea [(ngModel)]="cancelReason" rows="3" placeholder="Expliquez la raison..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeCancelModal()">Quitter</button>
+      <button [class]="cancelMode === 'reject' ? 'btn-red' : 'btn-grey'" (click)="confirmCancel()">
+        {{ cancelMode === 'reject' ? 'Confirmer le refus' : 'Confirmer l\'annulation' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<div class="map-wrapper">
+  <!-- Map Container -->
+  <div #mapContainer class="map-container"></div>
+
+  <!-- No Data Message -->
+  <div class="no-data-overlay" *ngIf="totalDistance === 0 && !isTracking">
+    <div class="no-data-content">
+      <p>📍 Aucune donnée GPS disponible pour ce trajet</p>
+      <small>Les positions GPS seront enregistrées lors du suivi</small>
+    </div>
+  </div>
+
+  <!-- Info Panel -->
+  <div class="map-info" *ngIf="totalDistance > 0">
+    <div class="info-item">
+      <span class="label">📏 Distance:</span>
+      <span class="value">{{ totalDistance | number:'1.2-2' }} km</span>
+    </div>
+    <div class="info-item" *ngIf="trackedPoints.length > 0">
+      <span class="label">📍 Points:</span>
+      <span class="value">{{ trackedPoints.length }}</span>
+    </div>
+  </div>
+
+  <!-- Tracking Controls -->
+  <div class="tracking-controls" *ngIf="showTracking">
+    <button class="btn-track" [class.active]="isTracking" (click)="isTracking ? stopTracking() : startTracking()">
+      <span *ngIf="!isTracking">🚀 Démarrer le suivi</span>
+      <span *ngIf="isTracking">⏹️ Arrêter le suivi</span>
+    </button>
+    <div class="tracking-status" *ngIf="isTracking">
+      <span class="pulse"></span> Suivi en cours...
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="map-legend">
+    <div class="legend-item">
+      <span class="dot green"></span> Départ
+    </div>
+    <div class="legend-item">
+      <span class="dot red"></span> Arrivée
+    </div>
+    <div class="legend-item">
+      <span class="dot blue"></span> Position actuelle
+    </div>
+  </div>
+</div>

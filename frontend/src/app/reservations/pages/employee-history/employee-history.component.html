@@ -1,0 +1,81 @@
+<div class="history-container">
+  <!-- 👤 Profil Employé -->
+  <div class="profile-card" *ngIf="currentUser">
+    <div class="profile-header">
+      <div class="avatar">👤</div>
+      <div class="profile-info">
+        <h2>{{ currentUser.nom }}</h2>
+        <p class="role">Employé</p>
+        <p class="email">{{ currentUser.email }}</p>
+        <p class="tel" *ngIf="currentUser.tel">📞 {{ currentUser.tel }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">{{ totalReservations }}</span>
+      <span class="stat-label">Total Réservations</span>
+    </div>
+    <div class="stat-card approved">
+      <span class="stat-number">{{ approvedCount }}</span>
+      <span class="stat-label">Approuvées</span>
+    </div>
+    <div class="stat-card pending">
+      <span class="stat-number">{{ pendingCount }}</span>
+      <span class="stat-label">En attente</span>
+    </div>
+    <div class="stat-card rejected">
+      <span class="stat-number">{{ rejectedCount }}</span>
+      <span class="stat-label">Rejetées</span>
+    </div>
+  </div>
+
+  <!-- 📜 Historique des Réservations -->
+  <div class="history-section">
+    <h3>📜 Historique des Réservations</h3>
+
+    <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+    <div class="loading" *ngIf="loading">Chargement...</div>
+
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date demande</th>
+            <th>Mission</th>
+            <th>Destination</th>
+            <th>Période</th>
+            <th>Véhicule</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of reservations">
+            <td>{{ r.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ r.mission }}</td>
+            <td>
+              <span *ngIf="r.destination">{{ r.destination }}</span>
+              <span *ngIf="!r.destination" class="no-vehicle">-</span>
+            </td>
+            <td>{{ r.date_debut | date:'dd/MM' }} <span *ngIf="r.date_fin">- {{ r.date_fin | date:'dd/MM' }}</span></td>
+            <td>
+              <span *ngIf="r.vehicle">{{ r.vehicle.marque }} {{ r.vehicle.modele }}</span>
+              <span *ngIf="!r.vehicle" class="no-vehicle">Non assigné</span>
+            </td>
+            <td>
+              <span class="status-badge" [class]="getStatusClass(r.status)">
+                {{ getStatusLabel(r.status) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="reservations.length === 0">
+        <p>Aucune réservation dans votre historique.</p>
+      </div>
+    </div>
+  </div>
+</div>

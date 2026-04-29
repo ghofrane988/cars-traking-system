@@ -1,0 +1,205 @@
+<div class="calendar-page-layout">
+    <!-- Main Calendar Area -->
+    <div class="calendar-main">
+        <div class="calendar-wrapper">
+            <!-- Header mirroring the photo -->
+            <div class="calendar-header">
+                <div class="header-left">
+                    <h2>Fleet Scheduler</h2>
+                    <div class="view-toggles">
+                        <span class="pill active">W</span>
+                        <span class="pill">M</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn-today" (click)="today()">Today</button>
+                    <div class="nav-controls">
+                        <button (click)="prevWeek()">&lt;</button>
+                        <span class="range-text">{{ weekRangeText }}</span>
+                        <button (click)="nextWeek()">&gt;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend bar -->
+            <div class="legend-bar">
+                <div class="legend-item"><span class="dot pending"></span> En attente</div>
+                <div class="legend-item"><span class="dot approved"></span> Approuvée</div>
+                <div class="legend-item"><span class="dot in-progress"></span> En cours</div>
+                <div class="legend-item"><span class="dot completed"></span> Terminée</div>
+                <div class="legend-item"><span class="dot rejected"></span> Refusée</div>
+                <div class="legend-item"><span class="dot cancelled"></span> Annulée</div>
+            </div>
+
+            <!-- Grid Container -->
+            <div class="grid-container">
+                <!-- Time column -->
+                <div class="time-col">
+                    <div class="time-header">Heure</div>
+                    <div *ngFor="let hour of hours" class="hour-label">
+                        {{ hour < 10 ? '0' + hour : hour }}:00 </div>
+                    </div>
+
+                    <!-- Days columns -->
+                    <div class="days-container">
+                        <div class="days-header">
+                            <div *ngFor="let day of weekDays" class="day-header" [class.is-today]="isToday(day)">
+                                <div class="day-name">{{ day | date:'EEE' }}</div>
+                                <div class="day-num">{{ day | date:'dd' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Grid Body -->
+                        <div class="grid-body">
+                            <!-- Background grid lines -->
+                            <div class="grid-bg">
+                                <div *ngFor="let hour of hours" class="grid-row-line"></div>
+                            </div>
+
+                            <!-- Events Layer -->
+                            <div class="events-layer">
+                                <div *ngFor="let day of weekDays; let i = index" class="day-column">
+                                    <div *ngFor="let event of getEventsForDay(day)" class="event-block"
+                                        [ngStyle]="getEventStyle(event, day)">
+                                        <div class="event-type">{{ getStatusLabel(event.status) }}</div>
+                                        <div class="event-title">{{ event.title }}</div>
+                                        <div class="event-meta" *ngIf="event.mission">{{ event.mission }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar Stats (Full Status Support) -->
+        <div class="calendar-sidebar">
+            <div class="sidebar-inner">
+                <!-- Multi-segment Donut Chart -->
+                <div class="donut-card">
+                    <div class="donut-visual">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <!-- Segments with offsets -->
+                            <path class="circle approved" [attr.stroke-dasharray]="getPercent('approved') + ', 100'"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <path class="circle in-progress"
+                                [attr.stroke-dasharray]="getPercent('in_progress') + ', 100'"
+                                [attr.stroke-dashoffset]="'-' + getPercent('approved')"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <path class="circle pending" [attr.stroke-dasharray]="getPercent('pending') + ', 100'"
+                                [attr.stroke-dashoffset]="'-' + (getPercent('approved') + getPercent('in_progress'))"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <path class="circle completed" [attr.stroke-dasharray]="getPercent('completed') + ', 100'"
+                                [attr.stroke-dashoffset]="'-' + (getPercent('approved') + getPercent('in_progress') + getPercent('pending'))"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <path class="circle rejected" [attr.stroke-dasharray]="getPercent('rejected') + ', 100'"
+                                [attr.stroke-dashoffset]="'-' + (getPercent('approved') + getPercent('in_progress') + getPercent('pending') + getPercent('completed'))"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <path class="circle cancelled" [attr.stroke-dasharray]="getPercent('cancelled') + ', 100'"
+                                [attr.stroke-dashoffset]="'-' + (getPercent('approved') + getPercent('in_progress') + getPercent('pending') + getPercent('completed') + getPercent('rejected'))"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="donut-content">
+                            <span class="total-val">{{ weekEventsCount }}</span>
+                            <span class="total-label">Missions</span>
+                        </div>
+                    </div>
+                    <div class="time-filter">This week <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg></div>
+                </div>
+
+                <!-- Scrollable Stats Stack -->
+                <div class="stats-stack">
+                    <!-- Approved -->
+                    <div class="stat-card approved">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">Approuvées</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('approved') }}</div>
+                            <div class="stat-trend up">
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                    <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                +12%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- In Progress -->
+                    <div class="stat-card in-progress">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">En cours</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('in_progress') }}</div>
+                            <div class="stat-trend down">
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                    <path d="M1 1L9 9M9 9H3M9 9V3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                -5%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending -->
+                    <div class="stat-card pending">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">En attente</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('pending') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Completed -->
+                    <div class="stat-card completed">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">Terminées</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('completed') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Rejected/Cancelled (Grouped but distinct) -->
+                    <div class="stat-card rejected">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">Refusées</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('rejected') }}</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card cancelled">
+                        <div class="stat-header">
+                            <span class="stat-icon-bullet"></span>
+                            <span class="stat-name">Annulées</span>
+                        </div>
+                        <div class="stat-body">
+                            <div class="stat-value">{{ getCount('cancelled') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
