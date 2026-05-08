@@ -35,7 +35,24 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.error = 'Email ou mot de passe incorrect';
+        if (err.status === 401) {
+          this.error = 'Email ou mot de passe incorrect.';
+        } else if (err.status === 422) {
+          const errors = err.error?.errors || {};
+          if (errors.email) {
+            this.error = "Le format de l'email est incorrect.";
+          } else if (errors.password) {
+            this.error = "Le mot de passe est requis.";
+          } else {
+            this.error = "Veuillez vérifier les informations saisies.";
+          }
+        } else if (err.status === 500) {
+          this.error = 'Erreur serveur interne. Veuillez réessayer plus tard.';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        } else {
+          this.error = err.error?.message || 'Une erreur inattendue est survenue.';
+        }
         console.error(err);
       }
     });

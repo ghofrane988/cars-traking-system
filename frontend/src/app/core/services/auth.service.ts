@@ -61,6 +61,15 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
+  updateFirstLoginStatus(status: boolean): void {
+    const user = this.getCurrentUser();
+    if (user) {
+      user.is_first_login = status;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      this.currentUserSubject.next(user);
+    }
+  }
+
   getCurrentUser(): Employee | null {
     return this.currentUserSubject.value;
   }

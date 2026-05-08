@@ -43,7 +43,25 @@ export class ChangePasswordComponent implements OnInit {
             },
             error: (err) => {
                 this.loading = false;
-                this.error = err.error?.message || 'Error updating password';
+                if (err.status === 401) {
+                    this.error = 'L\'ancien mot de passe est incorrect.';
+                } else if (err.status === 422) {
+                    const errors = err.error?.errors || {};
+                    if (errors.new_password) {
+                        this.error = "Le nouveau mot de passe doit contenir au moins 6 caractères.";
+                    } else if (errors.current_password) {
+                        this.error = "L'ancien mot de passe est requis.";
+                    } else {
+                        this.error = "Veuillez vérifier les informations saisies.";
+                    }
+                } else if (err.status === 500) {
+                    this.error = 'Erreur serveur interne.';
+                } else if (err.status === 0) {
+                    this.error = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+                } else {
+                    this.error = err.error?.message || 'Erreur lors du changement de mot de passe.';
+                }
+                console.error(err);
             }
         });
     }

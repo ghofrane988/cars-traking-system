@@ -25,8 +25,19 @@ export class ForgotPasswordComponent {
         this.loading = false;
       },
       error: (err: any) => {
-        this.error = err.error?.message || 'Erreur lors de l\'envoi';
         this.loading = false;
+        if (err.status === 404) {
+          this.error = "Cette adresse email n'existe pas dans notre système.";
+        } else if (err.status === 422) {
+          this.error = "Le format de l'adresse email est incorrect.";
+        } else if (err.status === 500) {
+          this.error = 'Erreur serveur lors de l\'envoi de l\'email.';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        } else {
+          this.error = err.error?.message || 'Une erreur est survenue lors de l\'envoi.';
+        }
+        console.error(err);
       }
     });
   }

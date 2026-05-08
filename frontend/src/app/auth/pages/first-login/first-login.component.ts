@@ -20,14 +20,36 @@ export class FirstLoginComponent {
     }
 
     this.authService.setFirstLoginPassword(false, this.newPassword).subscribe({
-      next: () => this.navigateDashboard(),
-      error: (err: any) => this.error = 'Erreur lors du changement.'
+      next: () => {
+        this.authService.updateFirstLoginStatus(false);
+        this.navigateDashboard();
+      },
+      error: (err: any) => {
+        if (err.status === 422) {
+          const errors = err.error?.errors || {};
+          if (errors.password) {
+            this.error = "Le mot de passe doit contenir au moins 6 caractères.";
+          } else {
+            this.error = "Veuillez vérifier les informations saisies.";
+          }
+        } else if (err.status === 500) {
+          this.error = 'Erreur serveur interne.';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        } else {
+          this.error = err.error?.message || 'Erreur lors de la sauvegarde du mot de passe.';
+        }
+        console.error(err);
+      }
     });
   }
 
   skip() {
     this.authService.setFirstLoginPassword(true).subscribe({
-      next: () => this.navigateDashboard(),
+      next: () => {
+        this.authService.updateFirstLoginStatus(false);
+        this.navigateDashboard();
+      },
       error: () => this.navigateDashboard() // fallback to continue anyway
     });
   }

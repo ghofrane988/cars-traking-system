@@ -45,8 +45,28 @@ export class ResetPasswordComponent implements OnInit {
         setTimeout(() => this.router.navigate(['/login']), 2500);
       },
       error: (err: any) => {
-        this.error = err.error?.message || 'Erreur lors de la réinitialisation.';
         this.loading = false;
+        if (err.status === 400) {
+          this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
+        } else if (err.status === 404) {
+          this.error = 'Utilisateur introuvable.';
+        } else if (err.status === 422) {
+          const errors = err.error?.errors || {};
+          if (errors.password) {
+            this.error = "Le mot de passe doit contenir au moins 6 caractères.";
+          } else if (errors.email) {
+            this.error = "Le format de l'email est incorrect.";
+          } else {
+            this.error = "Veuillez vérifier les informations saisies.";
+          }
+        } else if (err.status === 500) {
+          this.error = 'Erreur serveur interne.';
+        } else if (err.status === 0) {
+          this.error = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        } else {
+          this.error = err.error?.message || 'Erreur lors de la réinitialisation.';
+        }
+        console.error(err);
       }
     });
   }
