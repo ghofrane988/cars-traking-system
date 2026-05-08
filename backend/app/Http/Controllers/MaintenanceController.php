@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 class MaintenanceController extends Controller
 {
     // 📌 GET /api/maintenances
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Maintenance::with('vehicle')->get(), 200);
+        $query = Maintenance::with('vehicle');
+
+        // 🔍 Filter by vehicle
+        if ($request->has('vehicle_id') && $request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        return response()->json($query->get(), 200);
     }
 
     // 📌 POST /api/maintenances
@@ -29,7 +36,7 @@ class MaintenanceController extends Controller
 
         // 🔄 Auto Update Vehicle Status
         $vehicle = $maintenance->vehicle;
-        $vehicle->statut = 'en maintenance';
+        $vehicle->updateEffectiveStatus();
         $vehicle->save();
 
         return response()->json([
@@ -67,8 +74,8 @@ class MaintenanceController extends Controller
 
         // 🔹 Optionally: release vehicle if needed
         $vehicle = $maintenance->vehicle;
-        if ($vehicle && $vehicle->statut === 'en maintenance') {
-            $vehicle->statut = 'disponible';
+        if ($vehicle && $vehicle->statut === 'En maintenance') {
+            $vehicle->statut = 'Disponible';
             $vehicle->save();
         }
 
@@ -81,7 +88,7 @@ class MaintenanceController extends Controller
         $maintenance = Maintenance::findOrFail($id);
         $vehicle = $maintenance->vehicle;
 
-        $vehicle->statut = 'disponible';
+        $vehicle->statut = 'Disponible';
         $vehicle->save();
 
         return response()->json([

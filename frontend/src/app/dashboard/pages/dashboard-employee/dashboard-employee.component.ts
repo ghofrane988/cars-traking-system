@@ -197,6 +197,48 @@ export class DashboardEmployeeComponent implements OnInit {
     const date = new Date(dateStr);
     return date.toISOString().slice(0, 16);
   }
+  // Propriétés
+showStartDialog = false;
+kmDebut: number | null = null;
+selectedStartReservation: any = null;
+
+// Ouvrir la modale de départ
+onStartMission(res: any): void {
+  this.selectedStartReservation = res;
+  this.kmDebut = null;
+  this.showStartDialog = true;
+}
+
+// Fermer sans confirmer
+cancelStart(): void {
+  this.showStartDialog = false;
+  this.selectedStartReservation = null;
+  this.kmDebut = null;
+}
+
+// Valider le départ
+confirmStart(): void {
+  if (!this.kmDebut || !this.selectedStartReservation) return;
+
+  this.loading = true;
+  this.reservationService.startMission(
+    this.selectedStartReservation.id,
+    this.kmDebut
+  ).subscribe({
+    next: () => {
+      this.showStartDialog = false;
+      this.selectedStartReservation = null;
+      this.kmDebut = null;
+      this.loading = false;
+      this.toastService.success('Mission démarrée avec succès !');
+      this.refreshData();
+    },
+    error: (err: any) => {
+      this.error = 'Erreur lors du démarrage de la mission.';
+      this.loading = false;
+    }
+  });
+}
 
   getStatusClass(status: string): string {
     switch (status) {

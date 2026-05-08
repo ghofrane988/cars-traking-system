@@ -16,10 +16,12 @@ export class VehicleService {
     return this.http.get<Vehicle[]>(this.apiUrl);
   }
 
-  getAvailableForPeriod(dateDebut: string, dateFin: string): Observable<Vehicle[]> {
-    return this.http.get<Vehicle[]>(`${environment.apiUrl}/vehicles-available`, {
-      params: { date_debut: dateDebut, date_fin: dateFin }
-    });
+  getAvailableForPeriod(dateDebut: string, dateFin: string, carType?: string): Observable<Vehicle[]> {
+    const params: any = { date_debut: dateDebut, date_fin: dateFin };
+    if (carType) {
+      params.car_type = carType;
+    }
+    return this.http.get<Vehicle[]>(`${environment.apiUrl}/vehicles-available`, { params });
   }
 
   getById(id: number): Observable<Vehicle> {

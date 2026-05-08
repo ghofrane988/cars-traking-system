@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import { GpsService, LatLng } from '../../../core/services/gps.service';
 import { GpsLocation } from '../../models/gps-location';
@@ -8,10 +8,11 @@ import { GpsLocation } from '../../models/gps-location';
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css']
 })
-export class MapComponent implements OnInit, OnDestroy {
+export class MapComponent implements OnInit, OnDestroy, OnChanges {
   @ViewChild('mapContainer') mapContainer!: ElementRef;
   @Input() reservationId?: number;
   @Input() showTracking = false;
+  @Input() fallbackPoints?: LatLng[];
   @Output() routeCalculated = new EventEmitter<{ distance: number; path: LatLng[] }>();
 
   private map: L.Map | null = null;
@@ -23,11 +24,31 @@ export class MapComponent implements OnInit, OnDestroy {
   trackedPoints: LatLng[] = [];
   totalDistance = 0;
   isTracking = false;
+  isFallbackRoute = false;
 
   constructor(private gpsService: GpsService) { }
 
   ngOnInit(): void {
     setTimeout(() => this.initMap(), 100);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.map) return;
+
+    if (changes['reservationId'] && !changes['reservationId'].firstChange) {
+      const newId = changes['reservationId'].currentValue;
+      if (newId) {
+        this.isFallbackRoute = false;
+        this.loadRoute(newId);
+      }
+    }
+
+    if (changes['fallbackPoints'] && !changes['fallbackPoints'].firstChange) {
+      const pts = changes['fallbackPoints'].currentValue as LatLng[] | undefined;
+      if (pts && pts.length > 0) {
+        this.displayFallbackRoute(pts);
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -56,6 +77,8 @@ export class MapComponent implements OnInit, OnDestroy {
     // Load existing GPS locations if reservationId provided
     if (this.reservationId) {
       this.loadRoute(this.reservationId);
+    } else if (this.fallbackPoints && this.fallbackPoints.length > 0) {
+      this.displayFallbackRoute(this.fallbackPoints);
     }
 
     // Get current position
@@ -73,13 +96,18 @@ export class MapComponent implements OnInit, OnDestroy {
     this.gpsService.getByReservation(reservationId).subscribe({
       next: (locations) => {
         if (locations.length > 0) {
+          this.isFallbackRoute = false;
           const points: LatLng[] = locations.map(loc => ({
             lat: loc.latitude,
             lng: loc.longitude
           }));
           this.displayRoute(points);
+        } else if (this.fallbackPoints && this.fallbackPoints.length > 0) {
+          // Pas de GPS → afficher l'itinéraire planifié
+          this.displayFallbackRoute(this.fallbackPoints);
         } else {
-          // No GPS data - show default view
+          // No GPS data and no fallback
+          this.isFallbackRoute = false;
           this.totalDistance = 0;
         }
         // Force map redraw
@@ -87,14 +115,49 @@ export class MapComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading route:', err);
-        this.totalDistance = 0;
+        if (this.fallbackPoints && this.fallbackPoints.length > 0) {
+          this.displayFallbackRoute(this.fallbackPoints);
+        } else {
+          this.totalDistance = 0;
+        }
       }
     });
+  }
+
+  private displayFallbackRoute(points: LatLng[]): void {
+    if (!this.map || points.length === 0) return;
+
+    this.isFallbackRoute = true;
+    this.clearMarkers();
+    if (this.polyline) {
+      this.map.removeLayer(this.polyline);
+    }
+
+    // Add markers: départ vert, arrivée rouge
+    points.forEach((point, index) => {
+      const color = index === 0 ? 'green' : index === points.length - 1 ? 'red' : 'blue';
+      const label = index === 0 ? 'Départ (planifié)' : index === points.length - 1 ? 'Arrivée (planifiée)' : `Point ${index + 1}`;
+      this.addMarker(point.lat, point.lng, label, color);
+    });
+
+    // Draw dashed polyline for planned route
+    this.polyline = L.polyline(points.map(p => [p.lat, p.lng]), {
+      color: '#7c3aed',
+      weight: 4,
+      opacity: 0.8,
+      dashArray: '10, 10'
+    }).addTo(this.map);
+
+    this.map.fitBounds(this.polyline.getBounds());
+
+    this.totalDistance = this.gpsService.calculateRouteDistance(points);
+    this.routeCalculated.emit({ distance: this.totalDistance, path: points });
   }
 
   private displayRoute(points: LatLng[]): void {
     if (!this.map || points.length === 0) return;
 
+    this.isFallbackRoute = false;
     // Clear existing
     this.clearMarkers();
     if (this.polyline) {

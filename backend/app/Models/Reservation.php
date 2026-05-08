@@ -16,6 +16,7 @@ class Reservation extends Model
         'date_fin',
         'mission',
         'destination',
+        'requested_vehicle_type',
         'status',
         'start_lat',
         'start_lng',
@@ -23,6 +24,8 @@ class Reservation extends Model
         'end_lng',
         'estimated_distance',
         'estimated_duration',
+        'km_debut',
+        'km_fin',
     ];
 
     protected $casts = [
@@ -47,6 +50,11 @@ class Reservation extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function tripRoute()
+    {
+        return $this->hasOne(TripRoute::class);
     }
 
     // =========================

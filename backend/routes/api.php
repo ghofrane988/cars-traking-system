@@ -68,7 +68,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
 
-    // Add route for returning a vehicle / completing trip
+    // Add route for starting and returning a vehicle / completing trip
+    Route::post('/reservations/{id}/start', [ReservationController::class, 'startMission']);
     Route::post('/reservations/{id}/return', [ReservationController::class, 'returnVehicle']);
     Route::post('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
 
@@ -140,10 +141,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications/{employeeId}', [NotificationController::class, 'getEmployeeNotifications']);
     });
 
-    // Mark a notification as read
-    Route::middleware('permission:notification.update')->group(function () {
-        Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    });
+    // Mark a notification as read (ownership checked in controller)
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     // 🏢 COMPANY SETTINGS
     Route::get('/company-settings', [CompanySettingController::class, 'getSettings']);

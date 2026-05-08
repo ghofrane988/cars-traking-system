@@ -121,6 +121,89 @@ class DashboardController extends Controller
             ->select('id', 'marque', 'modele', 'matricule', 'statut')
             ->get();
 
+        // ── 1. Véhicules actifs aujourd'hui ──
+        $activeToday = Vehicle::where(function ($q) use ($now) {
+            $q->where('statut', 'En maintenance')
+              ->orWhere(function ($sub) use ($now) {
+                  $sub->where('statut', 'Affecté')
+                      ->whereHas('reservations', function ($r) use ($now) {
+                          $r->whereIn('status', ['approved', 'in_progress'])
+                            ->where('date_debut', '<=', $now)
+                            ->where(function ($d) use ($now) {
+                                $d->whereNull('date_fin')
+                                  ->orWhere('date_fin', '>=', $now);
+                            });
+                      });
+              });
+        })->select('id', 'marque', 'modele', 'matricule', 'statut')->get();
+
+        // ── 2. Maintenances cette semaine ──
+        $weekStart = $now->copy()->startOfWeek();
+        $weekEnd = $now->copy()->endOfWeek();
+        $maintenancesThisWeek = Vehicle::whereNotNull('maintenance_start_date')
+            ->whereBetween('maintenance_start_date', [$weekStart, $weekEnd])
+            ->select('id', 'marque', 'modele', 'matricule', 'maintenance_start_date', 'maintenance_end_date')
+            ->get();
+
+        // ── 3. Réservations 7 derniers jours ──
+        $last7Days = collect(range(0, 6))->map(function ($i) use ($now) {
+            $day = $now->copy()->subDays($i)->startOfDay();
+            $count = Reservation::whereDate('created_at', $day)->count();
+            return [
+                'day' => $day->format('D'),
+                'full_date' => $day->format('Y-m-d'),
+                'count' => $count,
+            ];
+        })->reverse()->values();
+
+        // ── 4. Réservations semaine précédente ──
+        $prev7Days = collect(range(7, 13))->map(function ($i) use ($now) {
+            $day = $now->copy()->subDays($i)->startOfDay();
+            $count = Reservation::whereDate('created_at', $day)->count();
+            return [
+                'day' => $day->format('D'),
+                'full_date' => $day->format('Y-m-d'),
+                'count' => $count,
+            ];
+        })->reverse()->values();
+
+        // ── 5. Assurance expirant dans 30j ──
+        $insuranceExpiring = Vehicle::whereNotNull('assurance_date')
+            ->where('assurance_date', '<=', $now->copy()->addDays(30))
+            ->select('id', 'marque', 'modele', 'matricule', 'assurance_date')
+            ->orderBy('assurance_date')
+            ->get()
+            ->map(function ($v) use ($now) {
+                $daysLeft = $now->diffInDays($v->assurance_date, false);
+                $v->days_until_expiry = $daysLeft;
+                $v->is_expired = $daysLeft < 0;
+                return $v;
+            });
+
+        // ── 6. Dates réservations approuvées (calendrier) ──
+        $approvedReservationsDates = Reservation::whereIn('status', ['approved', 'in_progress'])
+            ->whereNotNull('date_debut')
+            ->select('id', 'date_debut', 'date_fin', 'mission', 'status')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'date' => $r->date_debut->format('Y-m-d'),
+                    'date_fin' => $r->date_fin ? $r->date_fin->format('Y-m-d') : null,
+                    'mission' => $r->mission,
+                    'status' => $r->status,
+                ];
+            });
+
+        // ── 7. Heatmap destinations ──
+        $destinationHeatmap = Reservation::whereIn('status', ['approved', 'in_progress', 'completed'])
+            ->whereNotNull('destination')
+            ->select('destination', DB::raw('COUNT(*) as count'), 'end_lat', 'end_lng')
+            ->groupBy('destination', 'end_lat', 'end_lng')
+            ->orderByDesc('count')
+            ->limit(15)
+            ->get();
+
         return response()->json([
             'vehicles' => $vehicleStats,
             'reservations' => $reservationStats,
@@ -128,12 +211,25 @@ class DashboardController extends Controller
             'charts' => [
                 'reservations_by_month' => $reservationsByMonth,
                 'maintenances_by_month' => $maintenancesByMonth,
+                'reservations_last_7_days' => $last7Days,
+                'reservations_previous_7_days' => $prev7Days,
             ],
             'top_vehicles' => $topVehicles,
             'pending_reservations' => $pendingReservations,
             'maintenance_costs_this_month' => $maintenanceCosts,
             'maintenance_alerts' => $maintenanceAlerts,
             'in_maintenance' => $inMaintenance,
+            'active_today' => [
+                'count' => $activeToday->count(),
+                'list' => $activeToday,
+            ],
+            'maintenances_this_week' => [
+                'count' => $maintenancesThisWeek->count(),
+                'list' => $maintenancesThisWeek,
+            ],
+            'insurance_expiring' => $insuranceExpiring,
+            'approved_reservations_dates' => $approvedReservationsDates,
+            'destination_heatmap' => $destinationHeatmap,
         ]);
     }
 
@@ -167,19 +263,38 @@ class DashboardController extends Controller
             ->count(),
         ];
 
-        // Current active reservation (if any) - approved and not yet completed
+        // Current active reservation (if any) - in_progress OR approved with today's date
+        $today = $now->copy()->startOfDay();
         $activeReservation = Reservation::with('vehicle')
             ->where('employee_id', $employeeId)
-            ->where('status', 'approved')
-            ->where(function ($query) use ($now) {
-            $query->whereNull('date_fin')
-                ->orWhere('date_fin', '>=', $now);
-        })
+            ->where(function ($query) use ($today, $now) {
+                // Truly in progress
+                $query->where('status', 'in_progress')
+                      // Or approved and started today
+                      ->orWhere(function ($sub) use ($today, $now) {
+                          $sub->where('status', 'approved')
+                              ->whereDate('date_debut', '<=', $now)
+                              ->where(function ($d) use ($now) {
+                                  $d->whereNull('date_fin')
+                                    ->orWhere('date_fin', '>=', $now);
+                              });
+                      });
+            })
             ->first();
 
-        // Recent reservations
+        // Future planned reservations (approved, date in future)
+        $plannedReservations = Reservation::with('vehicle')
+            ->where('employee_id', $employeeId)
+            ->where('status', 'approved')
+            ->whereDate('date_debut', '>', $now)
+            ->orderBy('date_debut', 'asc')
+            ->limit(5)
+            ->get();
+
+        // Recent reservations (history)
         $recentReservations = Reservation::with('vehicle')
             ->where('employee_id', $employeeId)
+            ->whereIn('status', ['completed', 'rejected', 'cancelled'])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
@@ -187,6 +302,7 @@ class DashboardController extends Controller
         return response()->json([
             'my_reservations' => $myReservations,
             'active_reservation' => $activeReservation,
+            'planned_reservations' => $plannedReservations,
             'recent_reservations' => $recentReservations,
         ]);
     }

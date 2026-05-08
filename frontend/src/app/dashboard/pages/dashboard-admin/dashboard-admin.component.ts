@@ -29,9 +29,15 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
   // 📊 Charts
   @ViewChild('reservationsChart') reservationsChartRef!: ElementRef;
   @ViewChild('vehiclesChart') vehiclesChartRef!: ElementRef;
+  @ViewChild('weeklyTrendChart') weeklyTrendChartRef!: ElementRef;
 
   reservationsChart: any = null;
   vehiclesChart: any = null;
+  weeklyTrendChart: any = null;
+
+  // 🗺️ Heatmap
+  @ViewChild('heatmapMap') heatmapMapRef!: ElementRef;
+  private heatmapMap: L.Map | null = null;
 
   // 🏢 Company Parking Config
   showParkingModal = false;
@@ -72,17 +78,22 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
         this.dashboardData = data;
         this.loading = false;
 
-        // Highlight pending/recent reservations in calendar
-        if (data.pending_reservations) {
-          data.pending_reservations.forEach(res => {
-            const d = new Date(res.date_debut);
+        // Highlight approved reservations in calendar
+        this.reservedDates.clear();
+        if (data.approved_reservations_dates) {
+          data.approved_reservations_dates.forEach(res => {
+            const d = new Date(res.date);
             if (d.getMonth() === this.currentDate.getMonth()) {
               this.reservedDates.add(d.getDate());
             }
           });
         }
 
-        setTimeout(() => this.initCharts(), 100);
+        setTimeout(() => {
+          this.initCharts();
+          this.initWeeklyTrendChart();
+          this.initHeatmapMap();
+        }, 200);
       },
       error: (err) => {
         this.error = 'Erreur: ' + (err.error?.message || err.message || 'Erreur lors du chargement du dashboard');
@@ -156,6 +167,110 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
           }
         }
       }
+    });
+  }
+
+  private initWeeklyTrendChart(): void {
+    if (!this.weeklyTrendChartRef || !this.dashboardData) return;
+
+    const ctx = this.weeklyTrendChartRef.nativeElement.getContext('2d');
+    const current = this.dashboardData.charts.reservations_last_7_days || [];
+    const previous = this.dashboardData.charts.reservations_previous_7_days || [];
+
+    if (this.weeklyTrendChart) this.weeklyTrendChart.destroy();
+
+    const labels = current.map((d: any) => d.day);
+
+    this.weeklyTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Cette semaine',
+            data: current.map((d: any) => d.count),
+            borderColor: 'rgba(79, 70, 229, 1)',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+          },
+          {
+            label: 'Semaine dernière',
+            data: previous.map((d: any) => d.count),
+            borderColor: 'rgba(148, 163, 184, 1)',
+            backgroundColor: 'rgba(148, 163, 184, 0.05)',
+            fill: true,
+            tension: 0.4,
+            borderDash: [5, 5],
+            pointRadius: 3,
+            pointBackgroundColor: 'rgba(148, 163, 184, 1)',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Évolution réservations (7 derniers jours)',
+            font: { size: 14, weight: 'bold' }
+          },
+          legend: {
+            position: 'bottom',
+            labels: { usePointStyle: true, padding: 15 }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  }
+
+  private initHeatmapMap(): void {
+    if (!this.heatmapMapRef || !this.dashboardData?.destination_heatmap) return;
+    if (this.heatmapMap) {
+      this.heatmapMap.remove();
+      this.heatmapMap = null;
+    }
+
+    const points = this.dashboardData.destination_heatmap;
+    const validPoints = points.filter(p => p.end_lat && p.end_lng);
+
+    if (validPoints.length === 0) return;
+
+    // Center on first point or default Tunis
+    const center = validPoints.length > 0
+      ? [validPoints[0].end_lat, validPoints[0].end_lng]
+      : [36.8065, 10.1815];
+
+    this.heatmapMap = L.map(this.heatmapMapRef.nativeElement).setView(center as L.LatLngExpression, 10);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; CARTO'
+    }).addTo(this.heatmapMap);
+
+    // Color scale based on count
+    const maxCount = Math.max(...points.map(p => p.count));
+
+    points.forEach((p: any) => {
+      if (!p.end_lat || !p.end_lng) return;
+      const intensity = p.count / maxCount;
+      const radius = 8 + intensity * 20;
+      const color = intensity > 0.6 ? '#dc2626' : intensity > 0.3 ? '#f59e0b' : '#3b82f6';
+
+      L.circleMarker([p.end_lat, p.end_lng], {
+        radius,
+        fillColor: color,
+        color: color,
+        weight: 1,
+        opacity: 0.8,
+        fillOpacity: 0.6
+      }).addTo(this.heatmapMap!)
+        .bindPopup(`<b>${p.destination}</b><br>${p.count} réservation(s)`);
     });
   }
 

@@ -29,6 +29,13 @@ class NotificationController extends Controller
     public function markAsRead($id)
     {
         $notification = Notification::findOrFail($id);
+        $user = auth()->user();
+
+        // Admin can mark any notification; others only their own
+        if (!$user->hasRole('admin') && $notification->employee_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $notification->is_read = true;
         $notification->save();
 

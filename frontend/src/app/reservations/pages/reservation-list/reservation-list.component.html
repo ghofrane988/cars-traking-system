@@ -50,6 +50,14 @@
             </div>
           </div>
           <div class="form-group">
+            <label>Type de véhicule souhaité *</label>
+            <select [(ngModel)]="newReservation.requested_vehicle_type" name="requested_vehicle_type" required>
+              <option value="passenger">Voiture (4 places)</option>
+              <option value="commercial">Véhicule commercial (2 places)</option>
+              <option value="mixed">Utilitaire mixte (4 places)</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Mission / Objectif *</label>
             <textarea [(ngModel)]="newReservation.mission" name="mission" rows="3"
               placeholder="Décrivez votre mission..." required></textarea>
@@ -107,14 +115,15 @@
           </div>
         </div>
 
-        <div class="table-wrapper">
+        <div class="table-responsive-wrapper">
           <table class="members-table">
             <thead>
               <tr>
                 <th>Véhicule</th>
                 <th>Employé</th>
-                <th>Dates</th>
-                <th>Mission</th>
+                <th class="hide-mobile">Dates</th>
+                <th class="hide-mobile">Mission</th>
+                <th class="hide-mobile">Type demandé</th>
                 <th>Statut</th>
                 <th style="text-align: center;">Actions</th>
               </tr>
@@ -129,13 +138,19 @@
                   </div>
                 </td>
                 <td class="col-name">{{ r.employee?.nom }}</td>
-                <td class="col-text">
+                <td class="col-text hide-mobile">
                   <div class="date-cell">
                     <span>{{ r.date_debut | date:'dd/MM/yyyy HH:mm' }}</span>
                     <small *ngIf="r.date_fin">➔ {{ r.date_fin | date:'dd/MM/yyyy HH:mm' }}</small>
                   </div>
                 </td>
-                <td class="col-text mission-cell" [title]="r.mission">{{ r.mission }}</td>
+                <td class="col-text mission-cell hide-mobile" [title]="r.mission">{{ r.mission }}</td>
+                <td class="hide-mobile">
+                  <span *ngIf="r.requested_vehicle_type" class="car-type-badge" [class]="r.requested_vehicle_type">
+                    {{ getVehicleTypeLabel(r.requested_vehicle_type) }}
+                  </span>
+                  <span *ngIf="!r.requested_vehicle_type" style="color: #94a3b8; font-size: 0.85rem;">-</span>
+                </td>
                 <td>
                   <span class="status-pill" [class]="r.status">
                     {{ getStatusLabel(r.status) }}
@@ -155,7 +170,7 @@
                       </svg></button>
                   </ng-container>
 
-                  <ng-container *ngIf="r.status === 'approved' && !hasStarted(r)">
+                  <ng-container *ngIf="r.status === 'approved'">
                     <button class="icon-btn success" (click)="approveReservation(r)" title="Modifier véhicule">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 20h9"></path>
@@ -181,16 +196,16 @@
               </tr>
             </tbody>
           </table>
+        </div>
 
-          <div class="empty-state" *ngIf="filteredReservations.length === 0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <p>Aucune réservation ne correspond à vos critères.</p>
-            <button class="btn-text" (click)="resetFilters()">Réinitialiser les filtres</button>
-          </div>
+        <div class="empty-state" *ngIf="filteredReservations.length === 0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p>Aucune réservation ne correspond à vos critères.</p>
+          <button class="btn-text" (click)="resetFilters()">Réinitialiser les filtres</button>
         </div>
       </div>
     </div>
@@ -262,6 +277,9 @@
         <h4>📋 Récapitulatif de la Mission</h4>
         <p><strong>{{ selectedReservation.mission }}</strong></p>
         <p>👤 Employé: {{ selectedReservation.employee?.nom }}</p>
+        <p *ngIf="selectedReservation.requested_vehicle_type">
+          🚗 Type demandé: <strong>{{ getVehicleTypeLabel(selectedReservation.requested_vehicle_type) }}</strong>
+        </p>
         <p *ngIf="selectedReservation.vehicle">🚗 Véhicule actuel: <strong>{{ selectedReservation.vehicle.marque }} {{
             selectedReservation.vehicle.modele }}</strong></p>
         <p>📅 {{ selectedReservation.date_debut | date:'dd/MM/yyyy HH:mm' }} <span
@@ -269,6 +287,27 @@
             selectedReservation.date_fin | date:'dd/MM/yyyy HH:mm' }}</span></p>
         <div class="route-badge" *ngIf="selectedReservation.estimated_distance">
           📍 Distance estimée: {{ selectedReservation.estimated_distance | number:'1.1-1' }} km
+        </div>
+        <div class="fuel-estimate-badge" *ngIf="selectedReservation.estimated_distance && selectedVehicle" style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 0.75rem; margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">⛽</span>
+          <div>
+            <strong style="color: #92400e;">Carburant estimé: {{ calculateFuelNeeded(selectedReservation.estimated_distance, selectedVehicle.consommation || 7) }} L</strong>
+            <div style="font-size: 0.85rem; color: #a16207;">
+              Basé sur {{ selectedVehicle.consommation || 7 }} L/100km ({{ selectedVehicle.type_carburant || 'Diesel' }})
+            </div>
+          </div>
+        </div>
+        <div class="fuel-cost-badge" *ngIf="selectedReservation.estimated_distance && selectedVehicle" style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 0.75rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">💰</span>
+          <div>
+            <strong style="color: #065f46;">Coût estimé: ~{{ (calculateFuelNeeded(selectedReservation.estimated_distance, selectedVehicle.consommation || 7) * 2.5) | number:'1.2-2' }} TND</strong>
+            <div style="font-size: 0.85rem; color: #047857;">
+              Prix approximatif (2.5 TND/L)
+            </div>
+          </div>
+        </div>
+        <div class="fuel-estimate-badge" *ngIf="selectedReservation.estimated_distance && !selectedVehicle" style="background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 0.75rem; margin-top: 0.75rem; color: #6b7280; font-size: 0.9rem;">
+          <span>ℹ️ Sélectionnez un véhicule pour voir l'estimation de carburant</span>
         </div>
       </div>
 
@@ -290,9 +329,17 @@
                 <span class="v-name">{{ v.marque }} {{ v.modele }}</span>
                 <span class="v-plate">{{ v.matricule }}</span>
               </div>
+              <div class="v-type-badge">
+                <span class="car-type-badge" [class]="v.car_type || 'passenger'">
+                  {{ getVehicleTypeLabel(v.car_type) }}
+                </span>
+              </div>
               <div class="v-details">
                 <span>⛽ {{ v.type_carburant || 'Diesel' }}</span>
                 <span class="v-cons">{{ v.consommation }} L/100</span>
+              </div>
+              <div class="v-fuel-estimate" *ngIf="selectedReservation?.estimated_distance" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb; font-size: 0.8rem; color: #059669;">
+                <strong>💡 Besoin: {{ calculateFuelNeeded((selectedReservation.estimated_distance || 0), (v.consommation || 7)) }} L</strong>
               </div>
             </div>
           </div>

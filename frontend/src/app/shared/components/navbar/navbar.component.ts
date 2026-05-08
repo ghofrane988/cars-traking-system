@@ -13,6 +13,7 @@ export class NavbarComponent implements OnInit {
   isAdmin: boolean = false;
   isResponsable: boolean = false;
   showLogoutConfirm: boolean = false;
+  mobileMenuOpen: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -25,6 +26,19 @@ export class NavbarComponent implements OnInit {
       this.isAdmin = user?.role === 'admin';
       this.isResponsable = user?.role === 'responsable';
     });
+
+    // Close mobile menu on route change
+    this.router.events.subscribe(() => {
+      this.closeMobileMenu();
+    });
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
   }
 
   logout(): void {

@@ -5,6 +5,7 @@ export interface Vehicle {
   matricule: string;
   annee?: number;
   statut: 'Disponible' | 'En maintenance' | 'Affecté';
+  car_type?: 'passenger' | 'commercial' | 'mixed';
   latitude?: number;
   longitude?: number;
   // Fuel consumption (L/100km)
@@ -12,6 +13,9 @@ export interface Vehicle {
   assurance_date?: string;
   visite_technique_date?: string;
   vignette_date?: string;
+  maintenance_start_date?: string;
+  maintenance_end_date?: string;
+  next_reservation_date?: string;
   type_carburant?: 'Essence' | 'Diesel' | 'Électrique' | 'Hybride';
   capacite_reservoir?: number;
   // Mileage tracking

@@ -8,42 +8,112 @@
   <div *ngIf="error" class="error">{{ error }}</div>
 
   <div *ngIf="!loading && !error" class="table-container">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Véhicule</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Coût</th>
-          <th>Date retour</th>
-          <th>Créé le</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let m of maintenances">
-          <td>{{ getVehicleName(m.vehicle_id!) }}</td>
-          <td>
-            <span class="badge" [class.panne]="m.type === 'panne'" [class.maintenance]="m.type === 'maintenance'">
-              {{ m.type }}
-            </span>
-          </td>
-          <td>{{ m.description }}</td>
-          <td>{{ m.cost | currency:'TND' }}</td>
-          <td>{{ m.return_date | date:'shortDate' }}</td>
-          <td>{{ m.created_at | date:'shortDate' }}</td>
-          <td class="actions">
-            <button class="btn-edit" (click)="editMaintenance(m)" title="Modifier">✏️</button>
-            <button class="btn-delete" (click)="deleteMaintenance(m.id!)" title="Supprimer">🗑️</button>
-            <button *ngIf="!m.return_date" class="btn-return" (click)="backToService(m.id!)" title="Remettre en service">✅</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Véhicule</th>
+            <th>Type</th>
+            <th class="hide-mobile">Description</th>
+            <th class="hide-mobile">Coût</th>
+            <th class="hide-mobile">Date retour</th>
+            <th class="hide-mobile">Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of maintenances">
+            <td>{{ getVehicleName(m.vehicle_id!) }}</td>
+            <td>
+              <span class="badge" [class.panne]="m.type === 'panne'" [class.maintenance]="m.type === 'maintenance'">
+                {{ m.type }}
+              </span>
+            </td>
+            <td class="hide-mobile">
+              <span *ngIf="!isLongDescription(m.description || '')">{{ m.description }}</span>
+              <span *ngIf="isLongDescription(m.description || '')">
+                {{ truncateDescription(m.description || '') }}
+                <a href="javascript:void(0)" (click)="openDetailModal(m)" style="color: #4338ca; text-decoration: underline; font-size: 0.85rem;">Voir</a>
+              </span>
+            </td>
+            <td class="hide-mobile">{{ m.cost | currency:'TND' }}</td>
+            <td class="hide-mobile">{{ m.return_date | date:'shortDate' }}</td>
+            <td class="hide-mobile">{{ m.created_at | date:'shortDate' }}</td>
+            <td class="actions">
+              <button class="btn-edit" (click)="editMaintenance(m)" title="Modifier">✏️</button>
+              <button class="btn-delete" (click)="deleteMaintenance(m.id!)" title="Supprimer">🗑️</button>
+              <button *ngIf="!m.return_date" class="btn-return" (click)="backToService(m.id!)" title="Remettre en service">✅</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <p *ngIf="maintenances.length === 0" class="no-data">
       Aucune maintenance enregistrée.
     </p>
+  </div>
+
+  <!-- Maintenance Report Modal -->
+  <div class="modal-overlay" *ngIf="showDetailModal && selectedMaintenanceForDetail" (click)="closeDetailModal()">
+    <div class="modal-content report-modal" (click)="$event.stopPropagation()" style="width: 90vw; max-width: 1000px; max-height: 85vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+      <!-- Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%); color: white; padding: 1.5rem; text-align: center; flex-shrink: 0;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">📋 Rapport de Maintenance</h2>
+        <button class="btn-close" (click)="closeDetailModal()" style="color: white; font-size: 1.5rem;">×</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body" style="padding: 2rem; background: #f8fafc; overflow-y: auto; flex: 1;">
+        <!-- Vehicle Card -->
+        <div class="info-card" style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px; background: #e0e7ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🚗</div>
+            <div>
+              <div style="font-weight: 600; color: #1e293b; font-size: 1.25rem;">{{ getVehicleName(selectedMaintenanceForDetail.vehicle_id!) }}</div>
+              <div style="color: #64748b; font-size: 1rem;">Véhicule concerné</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.5rem;">
+          <div class="info-card" style="background: white; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">{{ selectedMaintenanceForDetail.type === 'panne' ? '🚨' : '🔧' }}</div>
+            <div style="font-weight: 600; color: #1e293b; font-size: 1.1rem;">{{ selectedMaintenanceForDetail.type === 'panne' ? 'Panne' : 'Maintenance' }}</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Type</div>
+          </div>
+          <div class="info-card" style="background: white; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
+            <div style="font-weight: 600; color: #1e293b; font-size: 1.1rem;">{{ selectedMaintenanceForDetail.cost | currency:'TND' }}</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Coût total</div>
+          </div>
+          <div class="info-card" style="background: white; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">📅</div>
+            <div style="font-weight: 600; color: #1e293b; font-size: 1rem;">{{ selectedMaintenanceForDetail.created_at | date:'dd/MM/yyyy' }}</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Création</div>
+          </div>
+          <div class="info-card" style="background: white; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">🔙</div>
+            <div style="font-weight: 600; color: #1e293b; font-size: 1rem;">{{ selectedMaintenanceForDetail.return_date ? (selectedMaintenanceForDetail.return_date | date:'dd/MM/yyyy') : 'Non définie' }}</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Retour</div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="info-card" style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-weight: 600; color: #4338ca; margin-bottom: 1rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">📝 Description détaillée</div>
+          <div style="white-space: pre-wrap; line-height: 1.8; font-size: 1rem; color: #374151; background: #f1f5f9; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #4338ca; min-height: 150px;">
+            {{ selectedMaintenanceForDetail.description || 'Aucune description disponible.' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer" style="padding: 1.25rem; background: white; border-top: 1px solid #e2e8f0; text-align: center; flex-shrink: 0;">
+        <button class="btn-cancel" (click)="closeDetailModal()" style="background: #4338ca; color: white; padding: 1rem 3rem; border-radius: 10px; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Fermer le rapport</button>
+      </div>
+    </div>
   </div>
 
   <!-- Add/Edit Modal -->

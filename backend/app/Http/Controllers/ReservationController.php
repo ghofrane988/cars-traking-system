@@ -6,6 +6,7 @@ use App\Models\Reservation;
 use App\Models\Notification;
 use App\Models\Employee;
 use App\Models\CompanySetting;
+use App\Models\TripRoute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -14,7 +15,7 @@ class ReservationController extends Controller
     // 📌 GET /api/reservations - with optional search/filter
     public function index(Request $request)
     {
-        $query = Reservation::with('vehicle', 'employee');
+        $query = Reservation::with('vehicle', 'employee', 'tripRoute');
 
         // 🔍 Search by mission (partial match)
         if ($request->has('mission') && $request->mission) {
@@ -86,6 +87,7 @@ class ReservationController extends Controller
             'date_fin' => 'nullable|date|after_or_equal:date_debut',
             'mission' => 'required|string',
             'destination' => 'nullable|string',
+            'requested_vehicle_type' => 'nullable|in:passenger,commercial,mixed',
             'start_lat' => 'nullable|numeric|between:-90,90',
             'start_lng' => 'nullable|numeric|between:-180,180',
             'end_lat' => 'nullable|numeric|between:-90,90',
@@ -118,6 +120,7 @@ class ReservationController extends Controller
             'date_fin' => $request->date_fin,
             'mission' => $request->mission,
             'destination' => $request->destination,
+            'requested_vehicle_type' => $request->requested_vehicle_type,
             'start_lat' => $startLat,
             'start_lng' => $startLng,
             'end_lat' => $request->end_lat,
@@ -262,12 +265,34 @@ class ReservationController extends Controller
 
         Log::info('Reservation ' . $id . ' approved/updated! New status: ' . $reservation->fresh()->status);
 
-        // 🔄 Auto Update New Vehicle Status
+        // �️ Auto-create TripRoute for GPS tracking
+        TripRoute::updateOrCreate(
+            ['reservation_id' => $reservation->id],
+            [
+                'vehicle_id' => $vehicle_id,
+                'start_lat' => $reservation->start_lat,
+                'start_lng' => $reservation->start_lng,
+                'end_lat' => $reservation->end_lat,
+                'end_lng' => $reservation->end_lng,
+                'estimated_distance' => $reservation->estimated_distance,
+                'estimated_duration' => $reservation->estimated_duration,
+                'status' => 'planned',
+            ]
+        );
+        Log::info('TripRoute created/updated for reservation ' . $id);
+
+        // � Auto Update New Vehicle Status
         $newVehicle = \App\Models\Vehicle::find($vehicle_id);
         if ($newVehicle) {
-            $newVehicle->statut = 'Affecté';
+            // Si la réservation commence maintenant ou dans le passé → Affecté immédiatement
+            // Si la réservation est future → garder Disponible, le scheduler s'en occupera
+            if ($reservation->date_debut->lte(now())) {
+                $newVehicle->statut = 'Affecté';
+                Log::info('New vehicle ' . $vehicle_id . ' status updated to Affecté (reservation starts now or past)');
+            } else {
+                Log::info('New vehicle ' . $vehicle_id . ' kept Disponible (reservation starts at ' . $reservation->date_debut . ')');
+            }
             $newVehicle->save();
-            Log::info('New vehicle ' . $vehicle_id . ' status updated to Affecté');
         }
 
         // 🔔 Create notification for employee with vehicle details
@@ -372,6 +397,58 @@ class ReservationController extends Controller
         }
     }
 
+    // ▶️ START MISSION - employee starts the trip
+    public function startMission(Request $request, $id)
+    {
+        $request->validate([
+            'km_debut' => 'nullable|integer|min:0',
+        ]);
+
+        $reservation = Reservation::findOrFail($id);
+
+        // 🔒 Only owner or admin can start
+        $user = auth()->user();
+        if ($user->id !== $reservation->employee_id && !$user->hasRole('admin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Only approved reservations can be started
+        if ($reservation->status !== 'approved') {
+            return response()->json([
+                'message' => 'Reservation must be approved before starting'
+            ], 400);
+        }
+
+        // Update km_debut if provided
+        if ($request->has('km_debut') && $request->km_debut !== null) {
+            $reservation->km_debut = $request->km_debut;
+        }
+
+        $reservation->status = 'in_progress';
+        $reservation->save();
+
+        // Update TripRoute to active
+        $tripRoute = TripRoute::where('reservation_id', $reservation->id)->first();
+        if ($tripRoute) {
+            $tripRoute->update([
+                'status' => 'active',
+                'started_at' => now(),
+            ]);
+        }
+
+        // Ensure vehicle is marked as Affecté
+        if ($reservation->vehicle) {
+            $vehicle = $reservation->vehicle;
+            $vehicle->statut = 'Affecté';
+            $vehicle->save();
+        }
+
+        return response()->json([
+            'message' => 'Mission started successfully',
+            'reservation' => $reservation->load('vehicle', 'employee')
+        ]);
+    }
+
     // 🔄 RETURN VEHICLE - employee returns vehicle after use
     public function returnVehicle(Request $request, $id)
     {
@@ -390,6 +467,28 @@ class ReservationController extends Controller
         $reservation->status = 'completed';
         $reservation->date_fin = now();
         $reservation->save();
+
+        // 🗺️ Complete TripRoute
+        $tripRoute = TripRoute::where('reservation_id', $reservation->id)->first();
+        if ($tripRoute) {
+            // Calculate actual distance: prefer GPS cumulative, fallback to km_fin - km_debut
+            $actualDistance = null;
+            $latestGps = \App\Models\GpsLocation::where('reservation_id', $reservation->id)
+                ->orderByDesc('recorded_at')
+                ->first();
+            if ($latestGps && $latestGps->distance_cumulative > 0) {
+                $actualDistance = $latestGps->distance_cumulative;
+            } elseif ($reservation->km_debut !== null && $reservation->km_fin !== null) {
+                $actualDistance = $reservation->km_fin - $reservation->km_debut;
+            }
+
+            $tripRoute->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'actual_distance' => $actualDistance,
+            ]);
+            Log::info('TripRoute completed for reservation ' . $id . ' with actual_distance: ' . $actualDistance);
+        }
 
         // Release vehicle - change status to Disponible
         if ($reservation->vehicle) {

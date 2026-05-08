@@ -16,6 +16,8 @@ export class MaintenanceHistoryComponent implements OnInit {
   error = '';
   showModal = false;
   isEditing = false;
+  showDetailModal = false;
+  selectedMaintenanceForDetail: Maintenance | null = null;
 
   selectedMaintenance: Maintenance = {
     vehicle_id: '',
@@ -149,5 +151,29 @@ export class MaintenanceHistoryComponent implements OnInit {
     const id = Number(vehicleId);
     const vehicle = this.vehicles.find(v => v.id === id);
     return vehicle ? `${vehicle.marque} ${vehicle.modele}` : 'Véhicule #' + vehicleId;
+  }
+
+  // Truncate long descriptions
+  truncateDescription(desc: string, maxLength: number = 50): string {
+    if (!desc) return '';
+    if (desc.length <= maxLength) return desc;
+    return desc.substring(0, maxLength) + '...';
+  }
+
+  // Check if description is long
+  isLongDescription(desc: string, maxLength: number = 50): boolean {
+    return !!desc && desc.length > maxLength;
+  }
+
+  // Open detail modal with full maintenance report
+  openDetailModal(maintenance: Maintenance): void {
+    this.selectedMaintenanceForDetail = maintenance;
+    this.showDetailModal = true;
+  }
+
+  // Close detail modal
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedMaintenanceForDetail = null;
   }
 }

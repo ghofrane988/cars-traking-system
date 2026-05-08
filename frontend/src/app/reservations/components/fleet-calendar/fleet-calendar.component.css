@@ -499,3 +499,205 @@
     font-size: 0.65rem;
     opacity: 0.8;
 }
+
+/* ================================
+   RESPONSIVE CALENDAR STYLES
+   ================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .calendar-page-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .calendar-sidebar {
+        order: -1; /* Move sidebar above calendar on tablet */
+    }
+
+    .sidebar-inner {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .donut-card {
+        flex: 0 0 150px;
+        margin-bottom: 0;
+    }
+
+    .stats-stack {
+        flex: 1;
+        flex-direction: row;
+        flex-wrap: wrap;
+        min-width: 300px;
+    }
+
+    .stat-card {
+        flex: 1;
+        min-width: 140px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .calendar-page-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .calendar-wrapper {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    /* Header responsive */
+    .calendar-header {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .header-left h2 {
+        font-size: 1.1rem;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .range-text {
+        min-width: auto;
+        font-size: 0.8rem;
+    }
+
+    /* Legend bar - horizontal scroll */
+    .legend-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .legend-item {
+        flex-shrink: 0;
+        font-size: 0.7rem;
+    }
+
+    /* Grid container - horizontal scroll for mobile */
+    .grid-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Make grid wider to force scroll */
+    .days-container {
+        min-width: 600px;
+    }
+
+    /* Time column smaller */
+    .time-col {
+        width: 50px;
+        flex-shrink: 0;
+    }
+
+    .time-header,
+    .hour-label {
+        font-size: 0.6rem;
+    }
+
+    /* Sidebar - stack vertically */
+    .calendar-sidebar {
+        order: 0;
+    }
+
+    .sidebar-inner {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .donut-card {
+        flex: none;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    .donut-visual {
+        width: 100px;
+        height: 100px;
+    }
+
+    .stats-stack {
+        flex-direction: column;
+        min-width: auto;
+    }
+
+    .stat-card {
+        min-width: auto;
+        padding: 10px 12px;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+    .calendar-wrapper {
+        padding: 8px;
+    }
+
+    .header-left h2 {
+        font-size: 1rem;
+    }
+
+    .view-toggles {
+        display: none; /* Hide W/M toggles on very small screens */
+    }
+
+    .legend-bar {
+        padding: 6px 8px;
+    }
+
+    .legend-item {
+        font-size: 0.65rem;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .time-col {
+        width: 40px;
+    }
+
+    .day-name {
+        font-size: 0.55rem;
+    }
+
+    .day-num {
+        font-size: 0.75rem;
+    }
+
+    .event-block {
+        padding: 3px;
+        font-size: 0.65rem;
+    }
+
+    .event-type {
+        font-size: 0.5rem;
+    }
+
+    .event-title {
+        font-size: 0.65rem;
+    }
+}

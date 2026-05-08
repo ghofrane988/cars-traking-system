@@ -9,6 +9,7 @@ export interface Reservation {
   date_fin?: Date | string;
   mission: string;
   destination?: string;
+  requested_vehicle_type?: 'passenger' | 'commercial' | 'mixed';
   km_debut?: number;
   km_fin?: number;
   status: 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
@@ -23,6 +24,12 @@ export interface Reservation {
   end_lng?: number;
   estimated_distance?: number;
   estimated_duration?: number;
+  actual_distance?: number;
+  trip_route?: {
+    estimated_distance?: number;
+    actual_distance?: number;
+    status?: string;
+  };
 }
 
 export interface ReservationWithRoute extends Reservation {

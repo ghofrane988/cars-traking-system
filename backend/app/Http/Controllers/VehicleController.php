@@ -14,7 +14,12 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        return response()->json(Vehicle::all(), 200);
+        $vehicles = Vehicle::all();
+        $vehicles->each(function ($vehicle) {
+            $vehicle->updateEffectiveStatus();
+            $vehicle->refresh();
+        });
+        return response()->json($vehicles, 200);
     }
 
     /**
@@ -44,7 +49,9 @@ class VehicleController extends Controller
             'consommation' => 'nullable|string',
             'assurance_date' => 'nullable|date',
             'visite_technique_date' => 'nullable|date',
-            'vignette_date' => 'nullable|date'
+            'vignette_date' => 'nullable|date',
+            'maintenance_start_date' => 'nullable|date',
+            'maintenance_end_date' => 'nullable|date'
         ]);
 
         $vehicle = Vehicle::create($validated);
@@ -92,19 +99,42 @@ class VehicleController extends Controller
             'consommation' => 'nullable|string',
             'assurance_date' => 'nullable|date',
             'visite_technique_date' => 'nullable|date',
-            'vignette_date' => 'nullable|date'
+            'vignette_date' => 'nullable|date',
+            'maintenance_start_date' => 'nullable|date',
+            'maintenance_end_date' => 'nullable|date'
         ];
 
         $validated = $request->validate($rules);
 
+        // If admin sets maintenance with a future start date, keep current status
+        // The updateEffectiveStatus() model method will flip it automatically on that date
+        // If maintenance is scheduled in the FUTURE (after now), keep current status
+        // updateEffectiveStatus() or the scheduler will flip it automatically at that time
+        if (
+            isset($validated['statut']) && $validated['statut'] === 'En maintenance'
+            && isset($validated['maintenance_start_date'])
+            && \Carbon\Carbon::parse($validated['maintenance_start_date'])->gt(now())
+        ) {
+            unset($validated['statut']);
+        }
+
+        // Auto-set maintenance_end_date when leaving "En maintenance" status
+        if (isset($validated['statut']) && $vehicle->statut === 'En maintenance' && $validated['statut'] !== 'En maintenance') {
+            $validated['maintenance_end_date'] = now()->toDateTimeString();
+        }
+
         $user = auth()->user();
         // 🔒 If user is responsable, they can ONLY update administrative dates
         if ($user && $user->role === 'responsable' && !$user->hasRole('admin')) {
-            $allowedFields = ['assurance_date', 'visite_technique_date', 'vignette_date'];
+            $allowedFields = ['assurance_date', 'visite_technique_date', 'vignette_date', 'maintenance_start_date', 'maintenance_end_date'];
             $validated = array_intersect_key($validated, array_flip($allowedFields));
         }
 
         $vehicle->update($validated);
+
+        // Trigger automatic status change if maintenance_start_date has been reached
+        $vehicle->updateEffectiveStatus();
+        $vehicle->refresh();
 
         return response()->json($vehicle, 200);
     }
@@ -127,15 +157,16 @@ class VehicleController extends Controller
     {
         $request->validate([
             'date_debut' => 'required|date',
-            'date_fin' => 'required|date|after_or_equal:date_debut'
+            'date_fin' => 'required|date|after_or_equal:date_debut',
+            'car_type' => 'nullable|in:passenger,commercial,mixed'
         ]);
 
         $start = $request->date_debut;
         $end = $request->date_fin;
 
-        // A vehicle is available if it is NOT "En maintenance" AND there are no 
-        // overlapping approved or in_progress reservations for that period.
-        $vehicles = Vehicle::where('statut', '!=', 'En maintenance')
+        // A vehicle is available if it is NOT "En maintenance" (including scheduled ones)
+        // AND there are no overlapping approved or in_progress reservations for that period.
+        $query = Vehicle::notInEffectiveMaintenance()
             ->whereDoesntHave('reservations', function ($query) use ($start, $end) {
             $query->whereIn('status', ['approved', 'in_progress'])
                 ->where(function ($q) use ($start, $end) {
@@ -148,7 +179,14 @@ class VehicleController extends Controller
                 );
             }
             );
-        })->get();
+        });
+
+        // 🚗 Filter by requested vehicle type if provided
+        if ($request->has('car_type') && $request->car_type) {
+            $query->where('car_type', $request->car_type);
+        }
+
+        $vehicles = $query->get();
 
         return response()->json($vehicles, 200);
     }

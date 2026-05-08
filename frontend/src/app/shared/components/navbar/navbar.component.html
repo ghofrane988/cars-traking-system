@@ -1,4 +1,18 @@
-<aside class="sidebar" *ngIf="currentUser">
+<!-- Mobile Header with Hamburger -->
+<header class="mobile-header" *ngIf="currentUser">
+  <span class="mobile-logo">🚗 CarTracking</span>
+  <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Menu">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path *ngIf="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      <path *ngIf="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+</header>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" [class.active]="mobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+<aside class="sidebar" [class.open]="mobileMenuOpen" *ngIf="currentUser">
 
   <!-- Profile Section -->
   <div class="profile-section">

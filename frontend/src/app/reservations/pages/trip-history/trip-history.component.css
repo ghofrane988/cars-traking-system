@@ -137,8 +137,98 @@ h1 {
   color: #333;
 }
 
+/* Table responsive wrapper */
+.table-responsive-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  position: relative;
+}
+
+.table-responsive-wrapper table {
+  min-width: 600px;
+  width: 100%;
+}
+
 @media (max-width: 768px) {
+  .trip-history-container {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+
   .content:has(.map-section) {
     grid-template-columns: 1fr;
   }
+
+  .trips-list {
+    padding: 16px;
+  }
+
+  .table-responsive-wrapper {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+
+  .table th, .table td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  .btn-view {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .map-section {
+    padding: 16px;
+    min-height: 300px;
+  }
+}
+
+/* Distance badges */
+.distance-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.distance-badges span {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-estimated {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-actual {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-alert {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.no-data-badge {
+  color: #94a3b8;
+  font-size: 0.85rem;
 }

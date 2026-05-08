@@ -18,6 +18,9 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   isAdmin = false;
+  isEmployee = false;
+  private isFirstLoad = true; // 🔄 Flag pour éviter toasts au reload
+  private shownToastIds = new Set<number>(); // 🚫 Tracker pour éviter doublons de toasts
 
   constructor(
     private notificationService: NotificationService,
@@ -29,6 +32,7 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     this.isAdmin = this.authService.isAdmin();
+    this.isEmployee = !this.isAdmin && !this.authService.isResponsable();
 
     if (user?.id) {
       // Start polling every 10 seconds
@@ -47,11 +51,14 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
           const previous = this.notifications;
           this.notifications = notifications;
 
-          // Show toast for new notifications
-          const newNotifs = notifications.filter(n =>
-            !previous.find(p => p.id === n.id) && !n.is_read
-          );
-          newNotifs.forEach(n => this.showToast(n));
+          // Show toast for new notifications (skip on first load to avoid spam on page reload)
+          if (!this.isFirstLoad) {
+            const newNotifs = notifications.filter(n =>
+              !previous.find(p => p.id === n.id) && !n.is_read
+            );
+            newNotifs.forEach(n => this.showToast(n));
+          }
+          this.isFirstLoad = false;
         })
       );
     }
@@ -60,6 +67,25 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.notificationService.stopPolling();
     this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
+  // 🚨 Sort notifications: Emergency first, then unread, then read
+  get sortedNotifications(): Notification[] {
+    return [...this.notifications].sort((a, b) => {
+      const aIsEmergency = this.isEmergencyAlert(a.message);
+      const bIsEmergency = this.isEmergencyAlert(b.message);
+
+      // Emergency alerts always come first
+      if (aIsEmergency && !bIsEmergency) return -1;
+      if (!aIsEmergency && bIsEmergency) return 1;
+
+      // Then sort by unread status
+      if (!a.is_read && b.is_read) return -1;
+      if (a.is_read && !b.is_read) return 1;
+
+      // Finally sort by date (newest first)
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
   }
 
   toggleDropdown(): void {
@@ -78,9 +104,11 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
       this.notificationService.markAsRead(notification.id).subscribe();
     }
 
-    // Navigate to link if exists
-    if (notification.link) {
-      this.closeDropdown();
+    // Navigate: employee always goes to their dashboard, admin/responsable follow the link
+    this.closeDropdown();
+    if (this.isEmployee) {
+      this.router.navigate(['/employee/dashboard']);
+    } else if (notification.link) {
       this.router.navigate([notification.link]);
     }
   }
@@ -103,6 +131,29 @@ export class NotificationIconComponent implements OnInit, OnDestroy {
   }
 
   private showToast(notification: Notification): void {
-    this.toastService.info(notification.message);
+    // Éviter les doublons - ne pas afficher si déjà montré
+    if (notification.id && this.shownToastIds.has(notification.id)) {
+      return;
+    }
+
+    // Marquer comme affiché
+    if (notification.id) {
+      this.shownToastIds.add(notification.id);
+    }
+
+    // 🚨 Use warning toast for emergency alerts
+    if (this.isEmergencyAlert(notification.message)) {
+      this.toastService.warning('🚨 ' + notification.message, 8000); // Longer duration for emergencies
+    } else {
+      this.toastService.info(notification.message);
+    }
+  }
+
+  // 🚨 Check if notification is an emergency alert
+  isEmergencyAlert(message: string): boolean {
+    if (!message) return false;
+    const emergencyKeywords = ['emergency', 'urgence', '🚨', 'alert', 'critical', 'critique', 'high-risk', 'danger'];
+    const lowerMessage = message.toLowerCase();
+    return emergencyKeywords.some(keyword => lowerMessage.includes(keyword));
   }
 }

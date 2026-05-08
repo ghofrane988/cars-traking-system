@@ -15,3 +15,27 @@
     background-color: #f4f7fe;
     /* Light background matching the screenshot */
 }
+
+/* ================================
+   RESPONSIVE LAYOUT STYLES
+   ================================ */
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .main-content {
+        height: calc(100vh - 60px); /* Subtract mobile header height */
+        margin-top: 60px; /* Space for mobile header */
+        overflow-x: hidden;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .main-content {
+        padding: 16px;
+    }
+}
