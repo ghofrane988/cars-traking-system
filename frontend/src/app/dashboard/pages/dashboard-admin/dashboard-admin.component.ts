@@ -74,14 +74,14 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
   loadDashboard(): void {
     this.loading = true;
     this.dashboardService.getAdminDashboard().subscribe({
-      next: (data) => {
+      next: (data: AdminDashboard) => {
         this.dashboardData = data;
         this.loading = false;
 
         // Highlight approved reservations in calendar
         this.reservedDates.clear();
         if (data.approved_reservations_dates) {
-          data.approved_reservations_dates.forEach(res => {
+          data.approved_reservations_dates.forEach((res: any) => {
             const d = new Date(res.date);
             if (d.getMonth() === this.currentDate.getMonth()) {
               this.reservedDates.add(d.getDate());
@@ -95,7 +95,7 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
           this.initHeatmapMap();
         }, 200);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.error = 'Erreur: ' + (err.error?.message || err.message || 'Erreur lors du chargement du dashboard');
         this.loading = false;
         console.error('Dashboard error:', err);
@@ -105,10 +105,10 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
 
   loadEmployees(): void {
     this.employeeService.getAll().subscribe({
-      next: (data) => {
+      next: (data: Employee[]) => {
         this.employees = data.slice(0, 5);
       },
-      error: (err) => console.error('Error loading employees', err)
+      error: (err: any) => console.error('Error loading employees', err)
     });
   }
 
@@ -174,7 +174,7 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
             bodyFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
             displayColors: false,
             callbacks: {
-              label: (context) => `${context.parsed.y} réservation(s)`
+              label: (context: any) => `${context.parsed.y} réservation(s)`
             }
           }
         },
@@ -379,7 +379,7 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
             titleFont: { size: 13, family: "'Inter', sans-serif" },
             bodyFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
             callbacks: {
-              label: (context) => ` ${context.label}: ${context.parsed} véhicule(s)`
+              label: (context: any) => ` ${context.label}: ${context.parsed} véhicule(s)`
             }
           }
         }
@@ -392,7 +392,7 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
   // ==========================
 
   loadParkingSettings(): void {
-    this.companySettingService.getSettings().subscribe(settings => {
+    this.companySettingService.getSettings().subscribe((settings: CompanySetting | null) => {
       if (settings) {
         this.parkingSettings = settings;
       }
