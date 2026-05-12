@@ -431,3 +431,153 @@
     opacity: 1;
   }
 }
+
+/* ================================
+   RESPONSIVE NAVBAR STYLES
+   ================================ */
+
+/* Mobile Header with Hamburger */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(135deg, #4f46e5, #6d28d9);
+  z-index: 1000;
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mobile-logo {
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.hamburger-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.hamburger-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Mobile Menu Overlay */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 998;
+}
+
+/* Responsive Breakpoint: Tablet & Mobile */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    padding: 1rem;
+  }
+}
+
+/* Responsive Breakpoint: Mobile */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+  }
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-overlay.active {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 999;
+    transition: left 0.3s ease;
+    padding-top: 80px; /* Space for mobile header */
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-nav {
+    margin-bottom: 16px;
+  }
+
+  .nav-item {
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+
+  .profile-section {
+    margin-bottom: 16px;
+  }
+
+  .service-section {
+    margin-bottom: 16px;
+  }
+
+  .settings-bar {
+    margin-bottom: 12px;
+  }
+
+  .create-task-card {
+    padding: 16px;
+  }
+
+  .create-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .create-text {
+    font-size: 0.9rem;
+  }
+
+  /* Push content down on mobile */
+  :host-context(.main-content) {
+    margin-top: 60px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .sidebar {
+    width: 260px;
+  }
+
+  .nav-item {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+}

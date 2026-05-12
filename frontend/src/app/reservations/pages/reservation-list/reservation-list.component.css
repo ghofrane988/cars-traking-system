@@ -1,4 +1,4 @@
-﻿/* Layout Wrapper */
+/* Layout Wrapper */
 .reservation-container {
   max-width: 1400px;
   margin: 20px auto;
@@ -686,4 +686,254 @@
 .modern-textarea:focus {
   border-color: #8b5cf6;
   outline: none;
+}
+
+/* ================================
+   RESPONSIVE STYLES
+   ================================ */
+
+/* Table responsive wrapper */
+.table-responsive-wrapper {
+  width: 100%;
+}
+
+.table-responsive-wrapper table {
+  width: 100%;
+}
+
+/* Mobile Header Padding */
+@media (max-width: 768px) {
+  .reservation-container {
+    margin: 10px auto;
+    padding: 0 12px;
+    gap: 16px;
+  }
+
+  .reservation-container.full-screen {
+    padding: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .header-title-area h1 {
+    font-size: 1.3rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  /* View Toggle */
+  .view-toggle-modern {
+    width: 100%;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Admin Layout - Stack columns */
+  .admin-page-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Reservation Form */
+  .reservation-form-section {
+    padding: 16px;
+  }
+
+  .form-map-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Data Table - Cards on Mobile */
+  .table-responsive-wrapper {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .table-responsive-wrapper table {
+    min-width: 100%;
+  }
+
+  .members-table, 
+  .members-table tbody, 
+  .members-table tr, 
+  .members-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .members-table thead {
+    display: none;
+  }
+
+  .members-table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    border-left: 6px solid #cbd5e1; /* Default left border */
+  }
+
+  /* Colors based on reservation status */
+  .members-table tr.status-approved { border-left-color: #10b981; }
+  .members-table tr.status-pending { border-left-color: #f59e0b; }
+  .members-table tr.status-in_progress { border-left-color: #3b82f6; }
+  .members-table tr.status-completed { border-left-color: #64748b; }
+  .members-table tr.status-rejected { border-left-color: #8b5cf6; }
+  .members-table tr.status-cancelled { border-left-color: #ec4899; }
+
+  .members-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide specific columns on mobile */
+  .hide-mobile, .col-status {
+    display: none !important;
+  }
+
+  /* Operation buttons */
+  .col-operation {
+    white-space: nowrap;
+    justify-content: flex-end !important;
+  }
+
+  /* Assign Modal */
+  .assign-modal-card {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .assign-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .vehicle-section {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .assign-map {
+    height: 250px;
+  }
+
+  /* Cancel Modal */
+  .cancel-modal-card {
+    width: 95vw;
+    margin: 20px;
+  }
+
+  /* Calendar responsive */
+  .calendar-section {
+    padding: 16px;
+  }
+
+  /* Route summary */
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .reservation-container {
+    padding: 0 8px;
+  }
+
+  .header-title-area h1 {
+    font-size: 1.1rem;
+  }
+
+  .toggle-btn {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablet specific */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-page-layout {
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+  }
+
+  .assign-modal-card {
+    width: 90vw;
+    max-width: 800px;
+  }
+}
+
+/* Car Type Badge Styles */
+.car-type-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.car-type-badge.passenger {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.car-type-badge.commercial {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.car-type-badge.mixed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.v-type-badge {
+  margin: 4px 0;
 }

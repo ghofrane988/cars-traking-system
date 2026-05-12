@@ -160,6 +160,22 @@
 .dot.red { background: #f44336; }
 .dot.blue { background: #2196f3; }
 
+/* Fallback Route Banner */
+.fallback-banner {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(124, 58, 237, 0.92);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+}
+
 /* No Data Overlay */
 .no-data-overlay {
   position: absolute;

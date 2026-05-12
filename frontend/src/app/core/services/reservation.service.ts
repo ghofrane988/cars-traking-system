@@ -56,4 +56,7 @@ export class ReservationService {
   getCalendar(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/calendar`);
   }
+  startMission(reservationId: number, kmDebut: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${reservationId}/start`, { km_debut: kmDebut });
+  }
 }

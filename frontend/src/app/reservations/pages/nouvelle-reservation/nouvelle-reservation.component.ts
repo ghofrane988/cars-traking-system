@@ -5,7 +5,7 @@ import { ReservationService } from '../../../core/services/reservation.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanySettingService } from '../../../core/services/company-setting.service';
-import { Vehicle } from '../../../shared/models/vehicle';
+import { Vehicle, calculateFuelNeeded } from '../../../shared/models/vehicle';
 import { Employee } from '../../../shared/models/employee';
 import { Reservation } from '../../../shared/models/reservation';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +25,7 @@ export class NouvelleReservationComponent implements OnInit, AfterViewInit, OnDe
     date_debut: '',
     mission: '',
     destination: '',
+    requested_vehicle_type: 'passenger',
     status: 'pending',
     start_lat: 36.8065,  // Tunis default
     start_lng: 10.1815,
@@ -374,6 +375,7 @@ export class NouvelleReservationComponent implements OnInit, AfterViewInit, OnDe
       date_fin: '',
       mission: '',
       destination: '',
+      requested_vehicle_type: 'passenger',
       status: 'pending',
       start_lat: 36.8065,
       start_lng: 10.1815,
@@ -403,5 +405,19 @@ export class NouvelleReservationComponent implements OnInit, AfterViewInit, OnDe
       return `${hours}h`;
     }
     return `${hours}h ${remainingMins}min`;
+  }
+
+  // Calculate estimated fuel needed based on average consumption (7L/100km)
+  getEstimatedFuel(): number {
+    const distance = this.reservation.estimated_distance || 0;
+    const avgConsumption = 7; // L/100km average
+    return calculateFuelNeeded(distance, avgConsumption);
+  }
+
+  // Get fuel cost estimation (approximate price: 2.5 TND/L)
+  getEstimatedFuelCost(): number {
+    const fuelLiters = this.getEstimatedFuel();
+    const pricePerLiter = 2.5; // TND
+    return Math.round(fuelLiters * pricePerLiter * 100) / 100;
   }
 }

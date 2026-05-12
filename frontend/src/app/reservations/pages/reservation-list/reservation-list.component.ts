@@ -71,6 +71,7 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
     date_fin: '',
     mission: '',
     destination: '',
+    requested_vehicle_type: 'passenger',
     start_lat: 36.8065,
     start_lng: 10.1815,
     end_lat: 36.8,
@@ -236,6 +237,7 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
       date_fin: this.newReservation.date_fin || null,
       mission: this.newReservation.mission,
       destination: this.newReservation.destination || '',
+      requested_vehicle_type: this.newReservation.requested_vehicle_type,
       status: 'pending' as const
     };
 
@@ -248,7 +250,8 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
           date_debut: '',
           date_fin: '',
           mission: '',
-          destination: ''
+          destination: '',
+          requested_vehicle_type: 'passenger'
         };
       },
       error: (err) => {
@@ -278,8 +281,9 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
       dateFin = endObj.toISOString();
     }
 
-    // Load ONLY vehicles available during this specific period
-    this.vehicleService.getAvailableForPeriod(dateDebut, dateFin).subscribe({
+    // Load ONLY vehicles available during this specific period, filtered by requested type
+    const requestedType = this.selectedReservation?.requested_vehicle_type;
+    this.vehicleService.getAvailableForPeriod(dateDebut, dateFin, requestedType || undefined).subscribe({
       next: (vehicles) => {
         console.log('Loaded available vehicles for period:', vehicles);
         this.availableVehicles = vehicles.map(v => ({
@@ -431,8 +435,10 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         this.loading = false;
-        this.error = 'Erreur lors de l\'opération';
-        alert(this.error);
+        console.error('>>> Reject/Cancel error:', err);
+        const errorMsg = err.error?.message || err.error?.error || err.message || 'Erreur lors de l\'opération';
+        this.error = errorMsg;
+        alert('❌ Erreur: ' + errorMsg);
       }
     });
   }
@@ -464,6 +470,15 @@ export class ReservationListComponent implements OnInit, AfterViewInit {
       case 'in_progress': return 'In Progress';
       case 'completed': return 'Completed';
       default: return status;
+    }
+  }
+
+  getVehicleTypeLabel(type: string | undefined): string {
+    switch (type) {
+      case 'passenger': return 'Voiture (4 places)';
+      case 'commercial': return 'Véhicule commercial (2 places)';
+      case 'mixed': return 'Utilitaire mixte (4 places)';
+      default: return 'Non spécifié';
     }
   }
 

@@ -27,10 +27,17 @@
       </div>
 
       <!-- Notification Items -->
-      <div class="notification-item" *ngFor="let n of notifications.slice(0, 10)" [class.unread]="!n.is_read"
-        [class.clickable]="n.link" (click)="onNotificationClick($event, n)" [title]="n.link ? 'Cliquer pour voir' : ''">
+      <div class="notification-item" *ngFor="let n of notifications.slice(0, 10)"
+        [class.unread]="!n.is_read"
+        [class.emergency]="isEmergencyAlert(n.message)"
+        [class.clickable]="n.link"
+        (click)="onNotificationClick($event, n)"
+        [title]="n.link ? 'Cliquer pour voir' : ''">
         <div class="notification-content">
-          <p class="message">{{ n.message }}</p>
+          <p class="message">
+            <span class="emergency-icon" *ngIf="isEmergencyAlert(n.message)">🚨</span>
+            {{ n.message }}
+          </p>
           <span class="time">{{ n.created_at | date:'dd/MM HH:mm' }}</span>
           <span class="link-hint" *ngIf="n.link">↗ Voir</span>
         </div>
@@ -38,8 +45,8 @@
       </div>
 
       <!-- More indicator -->
-      <div class="more-indicator" *ngIf="notifications.length > 10">
-        + {{ notifications.length - 10 }} autres notifications...
+      <div class="more-indicator" *ngIf="sortedNotifications.length > 10">
+        + {{ sortedNotifications.length - 10 }} autres notifications...
       </div>
     </div>
 

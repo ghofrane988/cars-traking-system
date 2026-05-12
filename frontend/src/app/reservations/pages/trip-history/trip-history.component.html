@@ -13,37 +13,53 @@
     <!-- Liste des trajets -->
     <div class="trips-list" [class.compact]="selectedReservation">
       <h2>Trajets complétés</h2>
-      <table class="table" *ngIf="completedReservations.length > 0">
-        <thead>
-          <tr>
-            <th>Employé</th>
-            <th>Véhicule</th>
-            <th>Mission</th>
-            <th>Date</th>
-            <th>Kilométrage</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let res of completedReservations">
-            <td>{{ res.employee?.nom }}</td>
-            <td>{{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</td>
-            <td>{{ res.mission }}</td>
-            <td>{{ res.date_debut | date:'shortDate' }}</td>
-            <td>
-              <span *ngIf="res.km_debut && res.km_fin">
-                {{ res.km_fin - res.km_debut }} km
-              </span>
-              <span *ngIf="!res.km_fin">-</span>
-            </td>
-            <td>
-              <button class="btn-view" (click)="viewTrip(res)">
-                📍 Voir sur carte
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive-wrapper" *ngIf="completedReservations.length > 0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Employé</th>
+              <th>Véhicule</th>
+              <th class="hide-mobile">Mission</th>
+              <th class="hide-mobile">Date</th>
+              <th class="hide-mobile">Km</th>
+              <th class="hide-mobile">Distance</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let res of completedReservations" class="status-completed">
+              <td>{{ res.employee?.nom }}</td>
+              <td>{{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</td>
+              <td class="hide-mobile">{{ res.mission }}</td>
+              <td class="hide-mobile">{{ res.date_debut | date:'shortDate' }}</td>
+              <td class="hide-mobile">
+                <span *ngIf="res.km_debut && res.km_fin">
+                  {{ res.km_fin - res.km_debut }} km
+                </span>
+                <span *ngIf="!res.km_fin">-</span>
+              </td>
+              <td class="hide-mobile">
+                <div class="distance-badges" *ngIf="res.trip_route">
+                  <span class="badge-estimated">Est: {{ res.trip_route.estimated_distance ?? res.estimated_distance ?? 0 | number:'1.1-1' }} km</span>
+                  <span class="badge-actual">Réel: {{ res.trip_route.actual_distance ?? 0 | number:'1.1-1' }} km</span>
+                  <span class="badge-alert" *ngIf="(res.trip_route.actual_distance ?? 0) > ((res.trip_route.estimated_distance ?? res.estimated_distance ?? 0) * 1.2)">
+                    ⚠️ +{{ ((res.trip_route.actual_distance ?? 0) / (res.trip_route.estimated_distance ?? res.estimated_distance ?? 1) - 1) * 100 | number:'1.0-0' }}%
+                  </span>
+                  <span class="badge-ok" *ngIf="(res.trip_route.actual_distance ?? 0) > 0 && (res.trip_route.actual_distance ?? 0) <= ((res.trip_route.estimated_distance ?? res.estimated_distance ?? 0) * 1.2)">
+                    ✓ Conforme
+                  </span>
+                </div>
+                <span *ngIf="!res.trip_route" class="no-data-badge">-</span>
+              </td>
+              <td>
+                <button class="btn-view" (click)="viewTrip(res)">
+                  📍 Voir
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <p *ngIf="completedReservations.length === 0" class="no-data">
         Aucun trajet complété pour le moment.
@@ -62,6 +78,7 @@
       <app-map
         [reservationId]="selectedReservation.id"
         [showTracking]="false"
+        [fallbackPoints]="fallbackPoints"
         (routeCalculated)="onRouteCalculated($event)"
       ></app-map>
     </div>

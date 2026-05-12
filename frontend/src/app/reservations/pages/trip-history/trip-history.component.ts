@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ReservationService } from '../../../core/services/reservation.service';
-import { GpsService } from '../../../core/services/gps.service';
+import { GpsService, LatLng } from '../../../core/services/gps.service';
 import { Reservation } from '../../../shared/models/reservation';
 
 @Component({
@@ -11,6 +11,7 @@ import { Reservation } from '../../../shared/models/reservation';
 export class TripHistoryComponent implements OnInit {
   completedReservations: Reservation[] = [];
   selectedReservation: Reservation | null = null;
+  fallbackPoints: LatLng[] | undefined = undefined;
   loading = true;
   error = '';
 
@@ -40,6 +41,18 @@ export class TripHistoryComponent implements OnInit {
 
   viewTrip(reservation: Reservation): void {
     this.selectedReservation = reservation;
+    this.fallbackPoints = this.buildFallbackPoints(reservation);
+  }
+
+  private buildFallbackPoints(res: Reservation): LatLng[] | undefined {
+    const points: LatLng[] = [];
+    if (res.start_lat != null && res.start_lng != null) {
+      points.push({ lat: res.start_lat, lng: res.start_lng });
+    }
+    if (res.end_lat != null && res.end_lng != null) {
+      points.push({ lat: res.end_lat, lng: res.end_lng });
+    }
+    return points.length >= 2 ? points : undefined;
   }
 
   onRouteCalculated(event: { distance: number; path: any[] }): void {

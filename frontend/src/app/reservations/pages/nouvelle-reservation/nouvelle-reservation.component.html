@@ -21,6 +21,16 @@
           </div>
         </div>
 
+        <!-- Type de véhicule souhaité -->
+        <div class="form-group">
+          <label>Type de véhicule souhaité *</label>
+          <select [(ngModel)]="reservation.requested_vehicle_type" name="requested_vehicle_type" required>
+            <option value="passenger">Voiture (4 places)</option>
+            <option value="commercial">Véhicule commercial (2 places)</option>
+            <option value="mixed">Utilitaire mixte (4 places)</option>
+          </select>
+        </div>
+
         <!-- Mission -->
         <div class="form-group">
           <label>Mission *</label>
@@ -58,6 +68,14 @@
             <div class="summary-item">
               <span class="label">Durée estimée:</span>
               <span class="value">{{ getDurationText() }}</span>
+            </div>
+            <div class="summary-item fuel-estimate">
+              <span class="label">⛽ Carburant estimé:</span>
+              <span class="value">{{ getEstimatedFuel() }} L</span>
+            </div>
+            <div class="summary-item fuel-cost">
+              <span class="label">💰 Coût estimé:</span>
+              <span class="value">~{{ getEstimatedFuelCost() }} TND</span>
             </div>
           </div>
           <p class="map-hint">💡 Déplacez les marqueurs sur la carte pour ajuster le trajet</p>

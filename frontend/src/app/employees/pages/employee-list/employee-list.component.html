@@ -46,35 +46,36 @@
     <div *ngIf="error" class="error">{{ error }}</div>
 
     <!-- Table -->
-    <table class="members-table" *ngIf="!loading && filteredEmployees.length > 0">
-      <thead>
-        <tr>
-          <th>Photo</th>
-          <th>Member name</th>
-          <th>Mobile</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th style="text-align: center;">Operation</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let emp of filteredEmployees">
-          <td>
-            <div class="avatar-cell">
-              <img [src]="'https://ui-avatars.com/api/?name=' + emp.nom + '&background=f4f4f5&color=3f3f46'"
-                alt="avatar" />
-            </div>
-          </td>
-          <td class="col-name">{{ emp.nom }}</td>
-          <td class="col-text">{{ emp.tel || '+216 00 000 000' }}</td>
-          <td class="col-email">{{ emp.email }}</td>
-          <td>
-            <span class="role-pill" [class.role-admin]="emp.role === 'admin'"
-              [class.role-resp]="emp.role === 'responsable'">
-              {{ emp.role || 'Employee' | titlecase }}
-            </span>
-          </td>
-          <td class="col-operation">
+    <div class="table-responsive-wrapper" *ngIf="!loading && filteredEmployees.length > 0">
+      <table class="members-table">
+        <thead>
+          <tr>
+            <th class="col-photo">Photo</th>
+            <th>Member name</th>
+            <th class="hide-mobile">Mobile</th>
+            <th class="hide-mobile">Email</th>
+            <th class="col-role">Role</th>
+            <th style="text-align: center;">Operation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of filteredEmployees" [ngClass]="'role-' + (emp.role || 'employee').toLowerCase()">
+            <td class="col-photo">
+              <div class="avatar-cell">
+                <img [src]="'https://ui-avatars.com/api/?name=' + emp.nom + '&background=f4f4f5&color=3f3f46'"
+                  alt="avatar" />
+              </div>
+            </td>
+            <td class="col-name">{{ emp.nom }}</td>
+            <td class="col-text hide-mobile">{{ emp.tel || '+216 00 000 000' }}</td>
+            <td class="col-email hide-mobile">{{ emp.email }}</td>
+            <td class="col-role">
+              <span class="role-pill" [class.role-admin]="emp.role === 'admin'"
+                [class.role-resp]="emp.role === 'responsable'">
+                {{ emp.role || 'Employee' | titlecase }}
+              </span>
+            </td>
+            <td class="col-operation">
             <!-- Details / Edit / Delete Icons all open the modern unified manager modal but with different modes -->
             <button class="icon-btn purple-tint" (click)="openActionModal(emp, 'view')"><svg fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -95,12 +96,13 @@
                 </path>
               </svg></button>
           </td>
-          <td style="text-align: right;">
+          <td style="text-align: right;" class="hide-mobile">
             <button class="btn btn-login" (click)="openActionModal(emp, 'view')">Login</button>
           </td>
         </tr>
       </tbody>
-    </table>
+      </table>
+    </div>
 
     <!-- No results message -->
     <div *ngIf="!loading && employees.length > 0 && filteredEmployees.length === 0" class="no-results"

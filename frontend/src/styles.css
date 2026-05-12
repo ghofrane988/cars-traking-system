@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Premium Color Palette */
   --pk-primary: #6B46C1; /* Elegant Purple */
@@ -141,4 +145,102 @@ label {
   box-shadow: var(--shadow-md);
   border: 1px solid rgba(0,0,0,0.05); /* subtle border */
   padding: 24px;
+}
+
+/* ================================
+   RESPONSIVE UTILITIES - GLOBAL
+   ================================ */
+
+/* Responsive Container */
+.container-fluid {
+  width: 100%;
+  padding-right: 16px;
+  padding-left: 16px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .container-fluid { max-width: 540px; }
+}
+@media (min-width: 768px) {
+  .container-fluid { max-width: 720px; }
+}
+@media (min-width: 992px) {
+  .container-fluid { max-width: 960px; }
+}
+@media (min-width: 1200px) {
+  .container-fluid { max-width: 1140px; }
+}
+
+/* Responsive Grid */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Responsive Flex */
+.flex-responsive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Responsive Table Container */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 600px;
+  width: 100%;
+}
+
+/* Responsive Modal */
+.modal-responsive {
+  width: 95vw;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .modal-responsive {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+}
+
+/* Hide on Mobile */
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+  .card { padding: 16px; }
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+}
+
+/* Hide on Desktop */
+@media (min-width: 768px) {
+  .hide-desktop { display: none !important; }
+}
+
+/* Text truncate */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .text-truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+  }
 }

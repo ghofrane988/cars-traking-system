@@ -137,8 +137,127 @@ h1 {
   color: #333;
 }
 
+/* Table responsive wrapper */
+.table-responsive-wrapper {
+  width: 100%;
+}
+
+.table-responsive-wrapper table {
+  width: 100%;
+}
+
 @media (max-width: 768px) {
+  .trip-history-container {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+  }
+
   .content:has(.map-section) {
     grid-template-columns: 1fr;
   }
+
+  .trips-list {
+    padding: 16px;
+  }
+
+  /* Data Table - Cards on Mobile */
+  .table-responsive-wrapper {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .table-responsive-wrapper table {
+    min-width: 100%;
+  }
+
+  .table, 
+  .table tbody, 
+  .table tr, 
+  .table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    border-left: 6px solid #475569; /* Default left border for completed trips */
+  }
+
+  .table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+  
+  .table td:last-child {
+    border-bottom: none;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .map-section {
+    padding: 16px;
+    min-height: 300px;
+  }
+}
+
+/* Distance badges */
+.distance-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.distance-badges span {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-estimated {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-actual {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-alert {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.no-data-badge {
+  color: #94a3b8;
+  font-size: 0.85rem;
 }

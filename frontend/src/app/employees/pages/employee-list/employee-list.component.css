@@ -565,3 +565,215 @@
   background: #1e293b;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
+
+/* ================================
+   RESPONSIVE STYLES
+   ================================ */
+
+@media (max-width: 1024px) {
+  .members-layout {
+    padding: 1.5rem;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .search-box input {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .members-layout {
+    padding: 16px 12px;
+  }
+
+  /* Top bar */
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 1rem;
+  }
+
+  .tabs {
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    flex: 1;
+    text-align: center;
+  }
+
+  .stats {
+    text-align: left;
+    width: 100%;
+  }
+
+  /* Card */
+  .card-body {
+    padding: 1rem;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .header-left h2 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  /* Search */
+  .search-box {
+    width: 100%;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  /* Buttons */
+  .header-left .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Table responsive - Cards on Mobile */
+  .table-responsive-wrapper {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .table-responsive-wrapper table {
+    min-width: 100%;
+  }
+
+  .members-table, 
+  .members-table tbody, 
+  .members-table tr, 
+  .members-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .members-table thead {
+    display: none;
+  }
+
+  .members-table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    border-left: 6px solid #cbd5e1; /* Default left border */
+  }
+
+  /* Colors based on role */
+  .members-table tr.role-admin { border-left-color: #7e22ce; }
+  .members-table tr.role-responsable { border-left-color: #3b82f6; }
+  .members-table tr.role-employee { border-left-color: #94a3b8; }
+
+  .members-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide specific columns on mobile */
+  .hide-mobile, .col-photo, .col-role {
+    display: none !important;
+  }
+
+  /* Operation buttons */
+  .col-operation {
+    white-space: nowrap;
+    justify-content: flex-end !important;
+  }
+
+  .icon-btn {
+    padding: 4px;
+    margin: 0 1px;
+  }
+
+  .icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Modals */
+  .user-modal-card {
+    width: 95vw;
+    padding: 1.5rem;
+    max-height: 85vh;
+  }
+
+  .u-modal-header-actions {
+    margin-bottom: 1rem;
+  }
+
+  .u-avatar-wrapper {
+    width: 60px;
+    height: 60px;
+  }
+
+  .u-identity-block {
+    margin-bottom: 1.5rem;
+  }
+
+  .u-name {
+    font-size: 1.25rem;
+  }
+
+  .u-form-grid {
+    gap: 1rem;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .u-form-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .u-label {
+    font-size: 0.8rem;
+  }
+
+  .u-modal-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .u-right-actions {
+    width: 100%;
+  }
+
+  .u-right-actions .btn {
+    flex: 1;
+  }
+}

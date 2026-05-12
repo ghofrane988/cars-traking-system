@@ -109,7 +109,7 @@
 }
 
 .table-container {
-  overflow-x: auto;
+  width: 100%;
 }
 
 .data-table {
@@ -185,5 +185,60 @@
   .profile-header {
     flex-direction: column;
     text-align: center;
+  }
+
+  /* Data Table - Cards on Mobile */
+  .table-container {
+    overflow-x: visible;
+  }
+
+  .data-table, 
+  .data-table tbody, 
+  .data-table tr, 
+  .data-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    border-left: 6px solid #cbd5e1; /* Default left border */
+  }
+
+  /* Colors based on reservation status */
+  .data-table tr.status-approved { border-left-color: #4caf50; }
+  .data-table tr.status-pending { border-left-color: #ff9800; }
+  .data-table tr.status-in_progress { border-left-color: #2196f3; }
+  .data-table tr.status-completed { border-left-color: #9e9e9e; }
+  .data-table tr.status-rejected { border-left-color: #f44336; }
+  .data-table tr.status-cancelled { border-left-color: #e91e63; }
+
+  .data-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+  
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide specific columns on mobile */
+  .col-status {
+    display: none !important;
   }
 }

@@ -1,8 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
-import { Subscription, interval } from 'rxjs';
+import { Subscription } from 'rxjs';
 import * as L from 'leaflet';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
 import { GpsService } from '../../../core/services/gps.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { ReservationService } from '../../../core/services/reservation.service';
@@ -55,10 +53,9 @@ export class SimulationGpsComponent implements OnInit, OnDestroy, AfterViewInit 
     private pathLine: L.Polyline | null = null;
     private positionMarkers: L.Marker[] = [];
 
-    // ⏱️ Subscription & WebSockets
-    private trackingSubscription: Subscription | null = null;
-    private echo: any = null;
-    private currentEchoChannel: string | null = null;
+    // ⏱️ Subscriptions
+    private dataSubscription: Subscription | null = null;
+    private statusSubscription: Subscription | null = null;
 
     // 🌍 Tunis coordinates (default)
     private tunisCoords: L.LatLngTuple = [36.8065, 10.1815];
@@ -78,28 +75,35 @@ export class SimulationGpsComponent implements OnInit, OnDestroy, AfterViewInit 
 
     ngOnInit(): void {
         this.loadActiveReservations();
-        this.initEcho();
+        this.subscribeToTracking();
     }
 
-    initEcho(): void {
-        Pusher.logToConsole = true; // Laisse les logs pour voir ce qu'il se passe
-
-        // Bypass Laravel Echo and use Pusher directly!
-        this.echo = new Pusher('localPusherKey', {
-            cluster: 'mt1', 
-            wsHost: window.location.hostname,
-            wsPort: 6001,
-            forceTLS: false,
-            disableStats: true,
-            enabledTransports: ['ws', 'wss'],
+    subscribeToTracking(): void {
+        // Sync with service state
+        this.statusSubscription = this.gpsService.isTrackingActive$.subscribe(active => {
+            this.isTracking = active;
         });
 
-        this.echo.connection.bind('connected', () => {
-            console.log('✅🟢 [PUSHER] Connecté au serveur WebSockets avec succès !');
-        });
-        
-        this.echo.connection.bind('error', (err: any) => {
-            console.error('❌🔴 [PUSHER] Erreur de connexion WebSocket :', err);
+        this.dataSubscription = this.gpsService.trackingData$.subscribe(data => {
+            if (!data) return;
+
+            this.ngZone.run(() => {
+                // If reservation changed or we just entered the page, load the full history
+                if (data.reservation && (!this.currentReservation || this.currentReservation.id !== data.reservation.id || this.positionHistory.length === 0)) {
+                    this.currentReservation = data.reservation;
+                    this.loadReservationHistory(data.reservation.id);
+                }
+
+                this.currentPosition = data;
+                this.selectedVehicleId = data.reservation?.vehicle_id || this.selectedVehicleId;
+
+                this.updateMapPosition(data.position);
+                this.addToHistory(data.position);
+
+                if (data.reservation) {
+                    this.checkDistanceAlert(data.reservation.id);
+                }
+            });
         });
     }
 
@@ -108,10 +112,10 @@ export class SimulationGpsComponent implements OnInit, OnDestroy, AfterViewInit 
     }
 
     ngOnDestroy(): void {
-        this.stopTracking();
-        if (this.echo) {
-            this.echo.disconnect();
-        }
+        // We do NOT stop the tracking here, as the user wants it to continue in the background
+        if (this.dataSubscription) this.dataSubscription.unsubscribe();
+        if (this.statusSubscription) this.statusSubscription.unsubscribe();
+        
         if (this.map) {
             this.map.remove();
         }
@@ -240,74 +244,12 @@ export class SimulationGpsComponent implements OnInit, OnDestroy, AfterViewInit 
 
     startTracking(): void {
         if (!this.selectedVehicleId) return;
-
-        this.isTracking = true;
+        this.gpsService.startTracking(this.selectedVehicleId, this.currentReservation);
         this.initMap();
-
-        // 1. Initial fetch to get the current position immediately
-        this.fetchCurrentPosition();
-
-        // 2. Stop any existing WebSocket listening for previous vehicles
-        if (this.currentEchoChannel && this.echo) {
-            this.echo.unsubscribe(this.currentEchoChannel);
-        }
-
-        // 3. Listen to Pusher for real-time updates!
-        if (this.echo) {
-            this.currentEchoChannel = `vehicle.${this.selectedVehicleId}`;
-            const channel = this.echo.subscribe(this.currentEchoChannel);
-            
-            // Add subscription debug log
-            channel.bind('pusher:subscription_succeeded', () => {
-                console.log(`📡✅ [PUSHER] Abonnement réussi au canal : ${this.currentEchoChannel}`);
-            });
-
-            channel.bind('gps.location.updated', (e: any) => {
-                console.log('📡 [PUSHER] Real-time GPS Received:', e);
-                
-                // Force Angular to detect changes if this runs outside Angular Zone
-                this.ngZone.run(() => {
-                    // The event sends e.gpsLocation. We need to wrap it similar to fetchCurrentPosition format
-                    const newPos = {
-                        latitude: e.gpsLocation.latitude,
-                        longitude: e.gpsLocation.longitude,
-                        speed: e.gpsLocation.speed,
-                        distance_cumulative: e.gpsLocation.distance_cumulative,
-                        recorded_at: e.gpsLocation.recorded_at
-                    };
-
-                    this.currentPosition = { position: newPos, reservation: this.currentReservation };
-                    this.updateMapPosition(newPos);
-                    this.addToHistory(newPos);
-
-                    if (this.currentReservation) {
-                        this.checkDistanceAlert(this.currentReservation.id);
-                    }
-                });
-            });
-        }
-
-        // 4. GUARANTEED FALLBACK: Poll every 3 seconds to ensure map updates
-        // This guarantees the map updates even if WebSockets fail completely!
-        if (!this.trackingSubscription) {
-            this.trackingSubscription = interval(3000).subscribe(() => {
-                this.fetchCurrentPosition();
-            });
-        }
     }
 
     stopTracking(): void {
-        this.isTracking = false;
-        
-        if (this.currentEchoChannel && this.echo) {
-            this.echo.unsubscribe(this.currentEchoChannel);
-            this.currentEchoChannel = null;
-        }
-
-        if (this.trackingSubscription) {
-            this.trackingSubscription.unsubscribe();
-            this.trackingSubscription = null;
-        }
+        this.gpsService.stopTracking();
     }
 
     // ==========================

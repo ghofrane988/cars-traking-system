@@ -1,14 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReservationService } from '../../../core/services/reservation.service';
+import { MaintenanceService } from '../../../core/services/maintenance.service';
 import { Vehicle } from '../../../shared/models/vehicle';
+import { Reservation } from '../../../shared/models/reservation';
+import { Maintenance } from '../../../shared/models/maintenance';
 
 @Component({
   selector: 'app-vehicle-list',
   templateUrl: './vehicle-list.component.html',
   styleUrls: ['./vehicle-list.component.css']
 })
-export class VehicleListComponent implements OnInit {
+export class VehicleListComponent implements OnInit, OnDestroy {
+  private pollingInterval: any;
   vehicles: Vehicle[] = [];
   selectedVehicle: Vehicle | null = null;
   loading = true;
@@ -17,7 +22,14 @@ export class VehicleListComponent implements OnInit {
   isResponsable = false;
 
   showModal = false;
-  modalMode: 'view' | 'edit' | 'delete' | 'create' = 'view';
+  modalMode: 'view' | 'edit' | 'delete' | 'create' | 'detail' = 'view';
+
+  // Detail modal data
+  showDetailModal = false;
+  selectedVehicleForDetail: Vehicle | null = null;
+  vehicleReservations: Reservation[] = [];
+  vehicleMaintenances: Maintenance[] = [];
+  loadingDetail = false;
 
   newVehicle: Vehicle = {
     marque: '',
@@ -25,10 +37,13 @@ export class VehicleListComponent implements OnInit {
     matricule: '',
     annee: new Date().getFullYear(),
     statut: 'Disponible',
+    car_type: 'passenger',
     consommation: undefined,
     assurance_date: undefined,
     visite_technique_date: undefined,
-    vignette_date: undefined
+    vignette_date: undefined,
+    maintenance_start_date: undefined,
+    maintenance_end_date: undefined
   };
 
   importing = false;
@@ -37,13 +52,26 @@ export class VehicleListComponent implements OnInit {
 
   constructor(
     private vehicleService: VehicleService,
-    private authService: AuthService
+    private authService: AuthService,
+    private reservationService: ReservationService,
+    private maintenanceService: MaintenanceService
   ) { }
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
     this.isResponsable = this.authService.isResponsable();
     this.loadVehicles();
+
+    // Auto-refresh toutes les 30s pour mettre à jour les statuts de maintenance
+    this.pollingInterval = setInterval(() => {
+      this.loadVehicles(true);
+    }, 30000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
   }
 
   get filteredVehicles(): Vehicle[] {
@@ -61,16 +89,18 @@ export class VehicleListComponent implements OnInit {
     this.appliedSearchQuery = this.searchQuery;
   }
 
-  loadVehicles(): void {
-    this.loading = true;
+  loadVehicles(silent = false): void {
+    if (!silent) this.loading = true;
     this.vehicleService.getAll().subscribe({
       next: (data) => {
+        const withMaint = data.filter(v => v.maintenance_start_date);
+        console.log('Vehicles with maintenance_start_date:', withMaint);
         this.vehicles = (this.isAdmin || this.isResponsable) ? data : data.filter(v => v.statut === 'Disponible');
-        this.loading = false;
+        if (!silent) this.loading = false;
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des véhicules';
-        this.loading = false;
+        if (!silent) this.loading = false;
         console.error(err);
       }
     });
@@ -84,18 +114,34 @@ export class VehicleListComponent implements OnInit {
       matricule: '',
       annee: new Date().getFullYear(),
       statut: 'Disponible',
+      car_type: 'passenger',
       consommation: undefined,
       assurance_date: undefined,
       visite_technique_date: undefined,
-      vignette_date: undefined
+      vignette_date: undefined,
+      maintenance_start_date: undefined,
+      maintenance_end_date: undefined
     };
     this.selectedVehicle = this.newVehicle;
     this.showModal = true;
   }
 
+  // Helper: Convert ISO date to datetime-local format (YYYY-MM-DDTHH:MM)
+  private toDateTimeLocal(dateStr: string | undefined): string | undefined {
+    if (!dateStr) return undefined;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return undefined;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   openActionModal(vehicle: Vehicle, mode: 'view' | 'edit' | 'delete'): void {
     this.modalMode = mode;
-    this.selectedVehicle = { ...vehicle };
+    this.selectedVehicle = {
+      ...vehicle,
+      maintenance_start_date: this.toDateTimeLocal(vehicle.maintenance_start_date),
+      maintenance_end_date: this.toDateTimeLocal(vehicle.maintenance_end_date)
+    };
     this.showModal = true;
   }
 
@@ -144,15 +190,25 @@ export class VehicleListComponent implements OnInit {
     });
   }
 
+  getCarTypeLabel(type: string | undefined): string {
+    switch (type) {
+      case 'passenger': return 'Voiture (4p)';
+      case 'commercial': return 'Commercial (2p)';
+      case 'mixed': return 'Mixte (4p)';
+      default: return 'Voiture (4p)';
+    }
+  }
+
   exportToCSV(): void {
     if (this.vehicles.length === 0) return;
 
-    const headers = ['ID', 'Marque', 'Modele', 'Matricule', 'Annee', 'Consommation', 'Assurance', 'Visite Tech', 'Vignette', 'Statut'];
+    const headers = ['ID', 'Marque', 'Modele', 'Matricule', 'Type', 'Annee', 'Consommation', 'Assurance', 'Visite Tech', 'Vignette', 'Statut'];
     const rows = this.vehicles.map(v => [
       v.id,
       `"${v.marque}"`,
       `"${v.modele}"`,
       `"${v.matricule}"`,
+      `"${this.getCarTypeLabel(v.car_type)}"`,
       v.annee || '',
       `"${v.consommation || ''}"`,
       `"${v.assurance_date || ''}"`,
@@ -285,5 +341,106 @@ export class VehicleListComponent implements OnInit {
       this.loadVehicles(); // Reload to ensure everything is synced
       alert(`Import terminé! ${promises.length} véhicules traités.`);
     });
+  }
+
+  // Open detail modal with reservations and maintenances
+  openDetailModal(vehicle: Vehicle): void {
+    this.selectedVehicleForDetail = vehicle;
+    this.showDetailModal = true;
+    this.loadingDetail = true;
+    this.vehicleReservations = [];
+    this.vehicleMaintenances = [];
+
+    // Load reservations for this vehicle
+    this.reservationService.getAll({ vehicle_id: vehicle.id }).subscribe({
+      next: (reservations) => {
+        this.vehicleReservations = reservations;
+        this.checkDetailLoading();
+      },
+      error: (err) => {
+        console.error('Erreur chargement réservations:', err);
+        this.checkDetailLoading();
+      }
+    });
+
+    // Load maintenances for this vehicle
+    this.maintenanceService.getAll({ vehicle_id: vehicle.id }).subscribe({
+      next: (maintenances) => {
+        this.vehicleMaintenances = maintenances;
+        this.checkDetailLoading();
+      },
+      error: (err) => {
+        console.error('Erreur chargement maintenances:', err);
+        this.checkDetailLoading();
+      }
+    });
+  }
+
+  // Check if both loading are complete
+  private checkDetailLoading(): void {
+    if (this.vehicleReservations.length >= 0 && this.vehicleMaintenances.length >= 0) {
+      this.loadingDetail = false;
+    }
+  }
+
+  // Close detail modal
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedVehicleForDetail = null;
+    this.vehicleReservations = [];
+    this.vehicleMaintenances = [];
+  }
+
+  // Get status color for reservation
+  getReservationStatusColor(status: string): string {
+    switch (status) {
+      case 'approved': return '#10b981'; // green
+      case 'completed': return '#3b82f6'; // blue
+      case 'in_progress': return '#8b5cf6'; // purple
+      case 'rejected': return '#ef4444'; // red
+      case 'cancelled': return '#6b7280'; // gray
+      case 'pending': return '#f59e0b'; // orange
+      default: return '#6b7280';
+    }
+  }
+
+  // Get status label for reservation
+  getReservationStatusLabel(status: string): string {
+    switch (status) {
+      case 'approved': return 'Approuvée';
+      case 'completed': return 'Terminée';
+      case 'in_progress': return 'En cours';
+      case 'rejected': return 'Rejetée';
+      case 'cancelled': return 'Annulée';
+      case 'pending': return 'En attente';
+      default: return status;
+    }
+  }
+  isMaintenanceFuture(dateStr: string): boolean {
+    if (!dateStr) return false;
+    return new Date(dateStr) > new Date();
+  }
+
+  // Check if maintenance is within next 60 minutes (urgent style)
+  isMaintenanceSoon(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const maintDate = new Date(dateStr);
+    const now = new Date();
+    const diffMs = maintDate.getTime() - now.getTime();
+    return diffMs > 0 && diffMs < 60 * 60 * 1000; // Less than 1 hour
+  }
+
+  // ── Réservation helpers ──
+  isReservationFuture(dateStr: string): boolean {
+    if (!dateStr) return false;
+    return new Date(dateStr) > new Date();
+  }
+
+  isReservationSoon(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const resDate = new Date(dateStr);
+    const now = new Date();
+    const diffMs = resDate.getTime() - now.getTime();
+    return diffMs > 0 && diffMs < 60 * 60 * 1000; // Less than 1 hour
   }
 }

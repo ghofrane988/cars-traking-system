@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\GpsLocation;
+use App\Models\Reservation;
 use App\Models\TripRoute;
 use App\Models\Vehicle;
+use App\Models\Notification;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +46,17 @@ class GpsLocationController extends Controller
             'speed' => 'nullable|numeric|min:0',
             'recorded_at' => 'required|date'
         ]);
+
+        // 🔗 Auto-detect active reservation if not provided
+        if (empty($validated['reservation_id'])) {
+            $activeReservation = Reservation::where('vehicle_id', $validated['vehicle_id'])
+                ->whereIn('status', ['approved', 'in_progress'])
+                ->latest('updated_at')
+                ->first();
+            if ($activeReservation) {
+                $validated['reservation_id'] = $activeReservation->id;
+            }
+        }
 
         // Calculate cumulative distance from last point
         $lastLocation = GpsLocation::where('vehicle_id', $validated['vehicle_id'])
@@ -108,16 +122,49 @@ class GpsLocationController extends Controller
 
         if (!$tripRoute) return;
 
-        $estimatedDistance = $tripRoute->estimated_distance;
-        $actualDistance = $gps->distance_cumulative;
+        $estimatedDistance = (float) $tripRoute->estimated_distance;
+        $actualDistance = (float) $gps->distance_cumulative;
 
         // Alert if exceeds 20% of estimated
         if ($estimatedDistance > 0 && $actualDistance > ($estimatedDistance * 1.2)) {
+            // Check if this is the FIRST time the threshold is exceeded (avoid spam)
+            $wasAlreadyExceeded = $tripRoute->actual_distance !== null
+                && (float) $tripRoute->actual_distance > ($estimatedDistance * 1.2);
+
             // Update trip route with actual distance
             $tripRoute->update(['actual_distance' => $actualDistance]);
 
-            // TODO: Send notification to admin (Phase 5)
-            Log::info("ALERT: Distance exceeded for reservation {$gps->reservation_id}. Estimated: {$estimatedDistance}km, Actual: {$actualDistance}km");
+            // 🔔 Send notification to admins & responsables ONLY on first exceed
+            if (!$wasAlreadyExceeded) {
+                $reservation = Reservation::with(['vehicle', 'employee'])
+                    ->find($gps->reservation_id);
+
+                $employeeName = $reservation?->employee?->nom ?? 'Inconnu';
+                $vehiclePlate = $reservation?->vehicle?->matricule ?? 'Inconnu';
+                $exceededPercent = round((($actualDistance - $estimatedDistance) / $estimatedDistance) * 100, 1);
+
+                $message = sprintf(
+                    '⚠️ Distance dépassée de %.1f%% ! Mission de %s (%s) : %.1f km sur %.1f km estimés.',
+                    $exceededPercent,
+                    $employeeName,
+                    $vehiclePlate,
+                    $actualDistance,
+                    $estimatedDistance
+                );
+
+                $managers = Employee::whereIn('role', ['admin', 'responsable'])->get();
+                foreach ($managers as $manager) {
+                    Notification::create([
+                        'employee_id' => $manager->id,
+                        'message' => $message,
+                        'link' => '/trip-history'
+                    ]);
+                }
+
+                Log::info("NOTIFICATION SENT: Distance exceeded for reservation {$gps->reservation_id}. Estimated: {$estimatedDistance}km, Actual: {$actualDistance}km. Notified " . $managers->count() . " managers.");
+            } else {
+                Log::info("ALERT (already notified): Distance exceeded for reservation {$gps->reservation_id}. Estimated: {$estimatedDistance}km, Actual: {$actualDistance}km");
+            }
         }
     }
 
@@ -195,9 +242,21 @@ class GpsLocationController extends Controller
      */
     public function getByReservation($reservationId)
     {
+        $reservation = Reservation::findOrFail($reservationId);
+
+        // 1️⃣ Primary: GPS locations explicitly linked to this reservation
         $locations = GpsLocation::where('reservation_id', $reservationId)
             ->orderBy('recorded_at', 'asc')
             ->get();
+
+        // 2️⃣ Fallback: vehicle + time range for legacy data without reservation_id
+        if ($locations->isEmpty() && $reservation->vehicle_id) {
+            $endDate = $reservation->date_fin ?? now();
+            $locations = GpsLocation::where('vehicle_id', $reservation->vehicle_id)
+                ->whereBetween('recorded_at', [$reservation->date_debut, $endDate])
+                ->orderBy('recorded_at', 'asc')
+                ->get();
+        }
 
         return response()->json($locations, 200);
     }
@@ -217,10 +276,18 @@ class GpsLocationController extends Controller
             ], 404);
         }
 
-        // Get reservation details if linked
+        // Get reservation details if linked, or infer from active reservation for this vehicle
         $reservation = null;
         if ($position->reservation_id) {
             $reservation = Reservation::with('employee')->find($position->reservation_id);
+        } else {
+            $inferred = Reservation::where('vehicle_id', $vehicleId)
+                ->whereIn('status', ['approved', 'in_progress'])
+                ->latest('updated_at')
+                ->first();
+            if ($inferred) {
+                $reservation = $inferred->load('employee');
+            }
         }
 
         return response()->json([

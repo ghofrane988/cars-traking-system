@@ -2,8 +2,13 @@
   <!-- Map Container -->
   <div #mapContainer class="map-container"></div>
 
+  <!-- Fallback Route Banner -->
+  <div class="fallback-banner" *ngIf="isFallbackRoute">
+    <span>📍 Itinéraire planifié — aucune donnée GPS enregistrée</span>
+  </div>
+
   <!-- No Data Message -->
-  <div class="no-data-overlay" *ngIf="totalDistance === 0 && !isTracking">
+  <div class="no-data-overlay" *ngIf="totalDistance === 0 && !isTracking && !isFallbackRoute">
     <div class="no-data-content">
       <p>📍 Aucune donnée GPS disponible pour ce trajet</p>
       <small>Les positions GPS seront enregistrées lors du suivi</small>

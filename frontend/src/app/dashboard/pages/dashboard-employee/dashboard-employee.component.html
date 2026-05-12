@@ -73,9 +73,40 @@
           <p><strong>Période:</strong> {{ dashboardData.active_reservation.date_debut | date:'dd/MM HH:mm' }} - En cours
           </p>
         </div>
-        <button class="btn-return" (click)="onMissionComplete()">
+        <!-- Bouton selon le statut -->
+        <button *ngIf="dashboardData.active_reservation?.status === 'approved'" class="btn-start" (click)="onStartMission(dashboardData.active_reservation)">
+          ▶️ Commencer la mission
+        </button>
+        <button *ngIf="dashboardData.active_reservation?.status === 'in_progress'" class="btn-return" (click)="onMissionComplete()">
           ✓ Terminer la mission
         </button>
+      </div>
+    </div>
+
+    <!-- Aucune mission aujourd'hui -->
+    <div *ngIf="!dashboardData.active_reservation" class="no-active-mission">
+      <div class="empty-state-icon">🚗</div>
+      <h3>Pas de mission aujourd'hui</h3>
+      <p>Vous n'avez aucune réservation en cours pour le moment.</p>
+    </div>
+
+    <!-- ▶️ Start Mission Modal -->
+    <div *ngIf="showStartDialog" class="modal-overlay" (click)="cancelStart()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-icon">🚀</div>
+        <h3>Démarrage de mission</h3>
+        <p>Merci de renseigner le kilométrage de départ du véhicule <strong>{{
+            dashboardData.active_reservation?.vehicle?.matricule }}</strong> pour démarrer la session.</p>
+
+        <div class="form-group">
+          <label>Kilométrage de départ (km)</label>
+          <input type="number" [(ngModel)]="kmDebut" placeholder="Ex: 12400" required />
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" (click)="cancelStart()">Annuler</button>
+          <button class="btn-confirm btn-start-modal" (click)="confirmStart()" [disabled]="!kmDebut">Démarrer la mission</button>
+        </div>
       </div>
     </div>
 
@@ -99,7 +130,40 @@
       </div>
     </div>
 
-    <!-- 📜 Historique Complet (Fusionné) -->
+    <!-- � Réservations Planifiées -->
+    <div *ngIf="dashboardData.planned_reservations?.length" class="planned-section">
+      <div class="section-header">
+        <h2>📅 Réservations Planifiées</h2>
+      </div>
+      <div class="table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Mission</th>
+              <th>Véhicule</th>
+              <th>Date prévue</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let res of dashboardData.planned_reservations" class="clickable-row" (click)="viewDetails(res)">
+              <td>
+                <div class="mission-cell">
+                  <span class="m-title">{{ res.mission }}</span>
+                  <span class="m-dest" *ngIf="res.destination">📍 {{ res.destination }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="vehicle-tag">{{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</span>
+                <small class="plate">{{ res.vehicle?.matricule }}</small>
+              </td>
+              <td>{{ res.date_debut | date:'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- �📜 Historique Complet (Fusionné) -->
     <div class="history-section">
       <div class="section-header">
         <h2>📜 Historique des Réservations</h2>

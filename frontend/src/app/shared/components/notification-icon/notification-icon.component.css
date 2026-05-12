@@ -145,6 +145,65 @@
   background: #4f46e5;
 }
 
+/* 🚨 Emergency Alert Styles */
+.notification-item.emergency {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  animation: emergency-pulse 2s ease-in-out infinite;
+}
+
+.notification-item.emergency:hover {
+  background: #fee2e2;
+}
+
+.notification-item.emergency.unread::before {
+  background: #dc2626;
+  width: 4px;
+}
+
+.notification-item.emergency .message {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.emergency-icon {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 1rem;
+  animation: siren 1s ease-in-out infinite;
+}
+
+.urgent-badge {
+  display: inline-block;
+  background: #dc2626;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes emergency-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+  }
+}
+
+@keyframes siren {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
 .notification-content {
   flex: 1;
 }

@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { GpsLocation } from '../../shared/models/gps-location';
+import { BehaviorSubject, Subscription, interval } from 'rxjs';
+import Pusher from 'pusher-js';
 
 export interface LatLng {
     lat: number;
@@ -21,7 +23,88 @@ export interface RouteInfo {
 export class GpsService {
     private apiUrl = `${environment.apiUrl}/gps-locations`;
 
-    constructor(private http: HttpClient) { }
+    // 📡 Real-time state
+    private pusher: any = null;
+    private currentChannel: any = null;
+    private currentVehicleId: number | null = null;
+    private pollingSubscription: Subscription | null = null;
+
+    // 📢 Data Stream
+    private trackingDataSubject = new BehaviorSubject<{ position: any, reservation: any } | null>(null);
+    public trackingData$ = this.trackingDataSubject.asObservable();
+
+    private isTrackingActive = new BehaviorSubject<boolean>(false);
+    public isTrackingActive$ = this.isTrackingActive.asObservable();
+
+    constructor(private http: HttpClient) { 
+        this.initPusher();
+    }
+
+    private initPusher(): void {
+        this.pusher = new Pusher('localPusherKey', {
+            cluster: 'mt1',
+            wsHost: window.location.hostname,
+            wsPort: 6001,
+            forceTLS: false,
+            disableStats: true,
+            enabledTransports: ['ws', 'wss'],
+        });
+
+        this.pusher.connection.bind('connected', () => {
+            console.log('✅🟢 [GpsService] Pusher connected');
+        });
+    }
+
+    startTracking(vehicleId: number, reservation: any = null): void {
+        if (this.currentVehicleId === vehicleId && this.isTrackingActive.value) return;
+
+        this.stopTracking(); // Clear previous tracking
+
+        this.currentVehicleId = vehicleId;
+        this.isTrackingActive.next(true);
+
+        // 1. WebSocket Tracking
+        const channelName = `vehicle.${vehicleId}`;
+        this.currentChannel = this.pusher.subscribe(channelName);
+        
+        this.currentChannel.bind('gps.location.updated', (e: any) => {
+            console.log('📡 [GpsService] Real-time Update:', e);
+            const newPos = {
+                latitude: e.gpsLocation.latitude,
+                longitude: e.gpsLocation.longitude,
+                speed: e.gpsLocation.speed,
+                distance_cumulative: e.gpsLocation.distance_cumulative,
+                recorded_at: e.gpsLocation.recorded_at
+            };
+            this.trackingDataSubject.next({ position: newPos, reservation });
+        });
+
+        // 2. Polling Fallback (every 5 seconds)
+        this.pollingSubscription = interval(5000).subscribe(() => {
+            this.getVehicleCurrentPosition(vehicleId).subscribe({
+                next: (data) => {
+                    this.trackingDataSubject.next(data);
+                },
+                error: (err) => {
+                    if (err.status !== 404) console.error('Polling error', err);
+                }
+            });
+        });
+    }
+
+    stopTracking(): void {
+        if (this.currentChannel) {
+            this.pusher.unsubscribe(`vehicle.${this.currentVehicleId}`);
+            this.currentChannel = null;
+        }
+        if (this.pollingSubscription) {
+            this.pollingSubscription.unsubscribe();
+            this.pollingSubscription = null;
+        }
+        this.currentVehicleId = null;
+        this.isTrackingActive.next(false);
+        this.trackingDataSubject.next(null);
+    }
 
     getAll(): Observable<GpsLocation[]> {
         return this.http.get<GpsLocation[]>(this.apiUrl);
