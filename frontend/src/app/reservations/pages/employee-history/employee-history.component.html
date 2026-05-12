@@ -48,11 +48,11 @@
             <th>Destination</th>
             <th>Période</th>
             <th>Véhicule</th>
-            <th>Statut</th>
+            <th class="col-status">Statut</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of reservations">
+          <tr *ngFor="let r of reservations" [ngClass]="'status-' + r.status">
             <td>{{ r.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ r.mission }}</td>
             <td>
@@ -64,7 +64,7 @@
               <span *ngIf="r.vehicle">{{ r.vehicle.marque }} {{ r.vehicle.modele }}</span>
               <span *ngIf="!r.vehicle" class="no-vehicle">Non assigné</span>
             </td>
-            <td>
+            <td class="col-status">
               <span class="status-badge" [class]="getStatusClass(r.status)">
                 {{ getStatusLabel(r.status) }}
               </span>

@@ -139,14 +139,10 @@ h1 {
 
 /* Table responsive wrapper */
 .table-responsive-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   width: 100%;
-  position: relative;
 }
 
 .table-responsive-wrapper table {
-  min-width: 600px;
   width: 100%;
 }
 
@@ -168,19 +164,52 @@ h1 {
     padding: 16px;
   }
 
+  /* Data Table - Cards on Mobile */
   .table-responsive-wrapper {
-    margin: 0 -12px;
-    padding: 0 12px;
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
   }
 
-  .table th, .table td {
-    padding: 10px 8px;
+  .table-responsive-wrapper table {
+    min-width: 100%;
+  }
+
+  .table, 
+  .table tbody, 
+  .table tr, 
+  .table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    border-left: 6px solid #475569; /* Default left border for completed trips */
+  }
+
+  .table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
     font-size: 0.85rem;
   }
-
-  .btn-view {
-    padding: 6px 10px;
-    font-size: 12px;
+  
+  .table td:last-child {
+    border-bottom: none;
   }
 
   .hide-mobile {

@@ -111,22 +111,27 @@
 
 /* Gradient Cards */
 .gradient-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .g-card {
-  border-radius: 24px;
-  padding: 2rem;
+  border-radius: 16px;
+  padding: 1.25rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   color: #1e293b;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
   position: relative;
   overflow: hidden;
+  min-height: 140px;
+}
+
+/* Allow the 5th card to span more gracefully if there is one */
+.g-card:nth-child(5) {
+  grid-column: span 2;
 }
 
 .g-card.purple {
@@ -149,45 +154,62 @@
   background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%);
 }
 
+.g-card-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .g-card-content h3 {
-  font-size: 1.4rem;
+  font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
   color: #1e293b;
+  padding-right: 40px;
 }
 
 .g-card-content p {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #475569;
-  margin: 0 0 1rem 0;
-  max-width: 80%;
+  margin: 0 0 0.75rem 0;
   line-height: 1.4;
+  flex-grow: 1;
 }
 
 .g-creator {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #64748b;
+  margin-top: auto;
 }
 
 .g-card-icon {
-  width: 56px;
-  height: 56px;
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #7e22ce;
-  flex-shrink: 0;
+  z-index: 1;
 }
 
 .g-card-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Charts & Sections */
+.charts-section {
+  margin-bottom: 2.5rem;
+}
+
 .section-title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -208,6 +230,8 @@
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
   height: 300px;
+  position: relative;
+  min-width: 0;
 }
 
 .chart-card.wide-chart {
@@ -280,6 +304,7 @@
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  margin-bottom: 2.5rem;
 }
 
 .modern-table {
@@ -705,6 +730,10 @@
   .dashboard-content {
     grid-template-columns: 1fr;
   }
+
+  .gradient-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -727,7 +756,12 @@
   }
 
   .page-title {
-    font-size: 1.3rem;
+    font-size: 1.15rem; /* Réduit pour le mobile */
+  }
+
+  .section-title {
+    font-size: 1.05rem; /* Réduit pour le mobile */
+    margin-bottom: 1rem;
   }
 
   .header-actions {
@@ -739,6 +773,43 @@
   .metrics-row {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+
+  .gradient-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .g-card {
+    padding: 0.85rem;
+    min-height: 110px;
+    border-radius: 12px;
+  }
+
+  .g-card-content h3 {
+    font-size: 0.8rem;
+    padding-right: 20px;
+  }
+
+  .g-card-content p {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .g-card-icon {
+    width: 24px;
+    height: 24px;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .g-card-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .g-card:nth-child(5) {
+    grid-column: span 2;
   }
 
   .metric-card {
@@ -756,13 +827,67 @@
   }
 
   /* Charts section */
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
   .chart-card {
     padding: 1rem;
+    height: 280px; /* Increased slightly to fit Chart.js legend and title comfortably */
+    min-width: 0;
+  }
+
+  .chart-card.wide-chart {
+    height: 280px; 
   }
 
   .chart-header {
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  /* Tables as cards on mobile */
+  .modern-table, 
+  .modern-table tbody, 
+  .modern-table tr, 
+  .modern-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .modern-table thead {
+    display: none;
+  }
+
+  .modern-table tr {
+    background: #ffffff;
+    margin-bottom: 1rem;
+    border-radius: 16px;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    border: 1px solid #e2e8f0;
+  }
+  
+  .modern-table td {
+    border-bottom: 1px solid #f8fafc;
+    padding: 0.75rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    text-align: right;
+  }
+
+  .modern-table td:last-child {
+    border-bottom: none;
+  }
+
+  .modern-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 1rem;
+    text-align: left;
   }
 
   /* Right sidebar - move below content */

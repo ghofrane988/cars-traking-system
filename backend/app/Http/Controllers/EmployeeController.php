@@ -37,7 +37,7 @@ class EmployeeController extends Controller
                 'nom' => $employee->nom,
                 'email' => $employee->email,
                 'role' => $employee->role,
-                'is_first_login' => (bool)$employee->is_first_login
+                'is_first_login' => (bool) $employee->is_first_login
             ],
             'token' => $token
         ]);
@@ -242,7 +242,7 @@ class EmployeeController extends Controller
     }
 
     /**
-     * 📧 FORGOT PASSWORD
+     * FORGOT PASSWORD
      */
     public function forgotPassword(Request $request)
     {
@@ -273,7 +273,7 @@ class EmployeeController extends Controller
     }
 
     /**
-     * 🔐 RESET PASSWORD (via Token)
+     * RESET PASSWORD (via Token)
      */
     public function resetPassword(Request $request)
     {

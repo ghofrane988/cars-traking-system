@@ -32,7 +32,7 @@
     gap: 10px;
     font-weight: 800;
     font-size: 1.25rem;
-    color: #2d6a4f;
+    color: #047857;
     text-decoration: none;
 }
 
@@ -50,11 +50,11 @@
 }
 
 .nav-links a:hover {
-    color: #2d6a4f;
+    color: #047857;
 }
 
 .nav-auth .btn-login {
-    background: #2d6a4f;
+    background: #047857;
     color: white;
     padding: 10px 25px;
     border-radius: 25px;
@@ -112,7 +112,7 @@
 .btn-hero-primary {
     padding: 16px 40px;
     background: white;
-    color: #2d6a4f;
+    color: #047857;
     border-radius: 40px;
     font-weight: 800;
     text-decoration: none;
@@ -161,14 +161,14 @@
 .feature-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
-    border-color: #2d6a4f;
+    border-color: #047857;
 }
 
 .feature-icon {
     width: 60px;
     height: 60px;
     background: #f0f7f4;
-    color: #2d6a4f;
+    color: #047857;
     border-radius: 20px;
     display: flex;
     align-items: center;
@@ -196,7 +196,7 @@
 
 /* Stats Section */
 .stats-section {
-    background: #2d6a4f;
+    background: #047857;
     padding: 80px 20px;
     color: white;
 }
@@ -266,7 +266,7 @@
 }
 
 .footer-col ul li a:hover {
-    color: #2d6a4f;
+    color: #047857;
 }
 
 .footer-bottom {
@@ -292,7 +292,7 @@
 }
 
 .social-links a:hover {
-    color: #2d6a4f;
+    color: #047857;
 }
 
 /* Animations */

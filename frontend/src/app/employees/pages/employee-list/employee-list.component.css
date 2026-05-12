@@ -653,32 +653,66 @@
     text-align: center;
   }
 
-  /* Table responsive */
+  /* Table responsive - Cards on Mobile */
   .table-responsive-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 -1rem;
-    padding: 0 1rem;
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
   }
 
   .table-responsive-wrapper table {
-    min-width: 700px;
+    min-width: 100%;
   }
 
-  .members-table th,
+  .members-table, 
+  .members-table tbody, 
+  .members-table tr, 
   .members-table td {
-    padding: 0.6rem 0.4rem;
-    font-size: 0.8rem;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Hide columns on mobile */
-  .hide-mobile {
+  .members-table thead {
+    display: none;
+  }
+
+  .members-table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    border-left: 6px solid #cbd5e1; /* Default left border */
+  }
+
+  /* Colors based on role */
+  .members-table tr.role-admin { border-left-color: #7e22ce; }
+  .members-table tr.role-responsable { border-left-color: #3b82f6; }
+  .members-table tr.role-employee { border-left-color: #94a3b8; }
+
+  .members-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide specific columns on mobile */
+  .hide-mobile, .col-photo, .col-role {
     display: none !important;
   }
 
   /* Operation buttons */
   .col-operation {
     white-space: nowrap;
+    justify-content: flex-end !important;
   }
 
   .icon-btn {

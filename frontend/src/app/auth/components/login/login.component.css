@@ -35,7 +35,7 @@
 .auth-logo {
   font-size: 24px;
   font-weight: 800;
-  color: #2d6a4f;
+  color: #047857;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -136,7 +136,7 @@
 .btn-submit {
   width: 100%;
   padding: 16px;
-  background: #2d6a4f;
+  background: #047857;
   /* Dark green from image */
   color: white;
   border: none;

@@ -1,4 +1,4 @@
-﻿/* Layout Wrapper */
+/* Layout Wrapper */
 .reservation-container {
   max-width: 1400px;
   margin: 20px auto;
@@ -694,14 +694,10 @@
 
 /* Table responsive wrapper */
 .table-responsive-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 0 -1rem;
-  padding: 0 1rem;
+  width: 100%;
 }
 
 .table-responsive-wrapper table {
-  min-width: 800px;
   width: 100%;
 }
 
@@ -763,31 +759,69 @@
     gap: 12px;
   }
 
-  /* Data Table - Horizontal scroll */
-  .data-table-container,
+  /* Data Table - Cards on Mobile */
   .table-responsive-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
   }
 
-  .data-table-container table,
   .table-responsive-wrapper table {
-    min-width: 700px;
+    min-width: 100%;
   }
 
-  /* Table cells padding reduction */
-  .data-table th,
-  .data-table td,
-  .members-table th,
+  .members-table, 
+  .members-table tbody, 
+  .members-table tr, 
   .members-table td {
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Hide some columns on mobile */
-  .col-hide-mobile,
-  .hide-mobile {
+  .members-table thead {
+    display: none;
+  }
+
+  .members-table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    border-left: 6px solid #cbd5e1; /* Default left border */
+  }
+
+  /* Colors based on reservation status */
+  .members-table tr.status-approved { border-left-color: #10b981; }
+  .members-table tr.status-pending { border-left-color: #f59e0b; }
+  .members-table tr.status-in_progress { border-left-color: #3b82f6; }
+  .members-table tr.status-completed { border-left-color: #64748b; }
+  .members-table tr.status-rejected { border-left-color: #8b5cf6; }
+  .members-table tr.status-cancelled { border-left-color: #ec4899; }
+
+  .members-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Hide specific columns on mobile */
+  .hide-mobile, .col-status {
     display: none !important;
+  }
+
+  /* Operation buttons */
+  .col-operation {
+    white-space: nowrap;
+    justify-content: flex-end !important;
   }
 
   /* Assign Modal */

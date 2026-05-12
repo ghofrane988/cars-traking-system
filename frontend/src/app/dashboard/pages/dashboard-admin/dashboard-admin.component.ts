@@ -136,6 +136,11 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
 
     if (this.reservationsChart) this.reservationsChart.destroy();
 
+    // 🎨 Modern Gradient for Bars
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 1)');   // Indigo 500
+    gradient.addColorStop(1, 'rgba(168, 85, 247, 0.8)'); // Purple 500
+
     this.reservationsChart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -143,10 +148,11 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
         datasets: [{
           label: 'Réservations',
           data: chartData.map(d => d.count),
-          backgroundColor: 'rgba(106, 27, 154, 0.8)',
-          borderColor: 'rgba(106, 27, 154, 1)',
-          borderWidth: 2,
-          borderRadius: 6
+          backgroundColor: gradient,
+          hoverBackgroundColor: 'rgba(79, 70, 229, 1)', // Indigo 600
+          borderRadius: 6,
+          borderSkipped: false,
+          barThickness: 28, // Modern thin bars
         }]
       },
       options: {
@@ -156,14 +162,36 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
           title: {
             display: true,
             text: 'Réservations par mois',
-            font: { size: 16, weight: 'bold' }
+            font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
+            color: '#1e293b',
+            padding: { bottom: 20 }
           },
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            titleFont: { size: 13, family: "'Inter', sans-serif" },
+            bodyFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
+            displayColors: false,
+            callbacks: {
+              label: (context) => `${context.parsed.y} réservation(s)`
+            }
+          }
         },
         scales: {
+          x: {
+            grid: { display: false, drawBorder: false },
+            ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' }
+          },
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1 }
+            grid: { color: '#f1f5f9', tickLength: 0, drawBorder: false },
+            ticks: {
+              stepSize: 1,
+              font: { family: "'Inter', sans-serif" },
+              color: '#64748b',
+              padding: 10
+            }
           }
         }
       }
@@ -181,6 +209,11 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
 
     const labels = current.map((d: any) => d.day);
 
+    // 🎨 Gradient for the line area
+    const gradientCurrent = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientCurrent.addColorStop(0, 'rgba(79, 70, 229, 0.2)');
+    gradientCurrent.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
     this.weeklyTrendChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -190,41 +223,59 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
             label: 'Cette semaine',
             data: current.map((d: any) => d.count),
             borderColor: 'rgba(79, 70, 229, 1)',
-            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            backgroundColor: gradientCurrent,
             fill: true,
             tension: 0.4,
+            borderWidth: 3,
             pointRadius: 4,
-            pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: 'rgba(79, 70, 229, 1)',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
           },
           {
             label: 'Semaine dernière',
             data: previous.map((d: any) => d.count),
             borderColor: 'rgba(148, 163, 184, 1)',
-            backgroundColor: 'rgba(148, 163, 184, 0.05)',
-            fill: true,
+            backgroundColor: 'transparent',
+            fill: false,
             tension: 0.4,
+            borderWidth: 2,
             borderDash: [5, 5],
-            pointRadius: 3,
-            pointBackgroundColor: 'rgba(148, 163, 184, 1)',
+            pointRadius: 0,
+            pointHoverRadius: 4,
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
-          title: {
-            display: true,
-            text: 'Évolution réservations (7 derniers jours)',
-            font: { size: 14, weight: 'bold' }
-          },
+          title: { display: false }, // Hidden since we have HTML title
           legend: {
-            position: 'bottom',
-            labels: { usePointStyle: true, padding: 15 }
+            position: 'top',
+            align: 'end',
+            labels: { usePointStyle: true, padding: 15, font: { family: "'Inter', sans-serif", size: 12 } }
+          },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            titleFont: { size: 13, family: "'Inter', sans-serif" },
+            bodyFont: { size: 13, family: "'Inter', sans-serif" },
+            usePointStyle: true,
           }
         },
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          x: {
+            grid: { display: false, drawBorder: false },
+            ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9', drawBorder: false },
+            ticks: { stepSize: 1, font: { family: "'Inter', sans-serif" }, color: '#64748b' }
+          }
         }
       }
     });
@@ -291,27 +342,45 @@ export class DashboardAdminComponent implements OnInit, AfterViewInit {
         datasets: [{
           data: [vehicles.disponible, vehicles.reserve, vehicles.maintenance, vehicles.panne],
           backgroundColor: [
-            'rgba(76, 175, 80, 0.8)',
-            'rgba(33, 150, 243, 0.8)',
-            'rgba(255, 152, 0, 0.8)',
-            'rgba(244, 67, 54, 0.8)'
+            '#10b981', // emerald-500
+            '#3b82f6', // blue-500
+            '#f59e0b', // amber-500
+            '#ef4444'  // red-500
           ],
-          borderWidth: 2,
-          borderColor: '#fff'
+          borderWidth: 0,
+          hoverOffset: 6,
+          borderRadius: 4 // Rounded segments!
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '72%', // Modern thin ring
         plugins: {
           title: {
             display: true,
             text: 'État des véhicules',
-            font: { size: 16, weight: 'bold' }
+            font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
+            color: '#1e293b',
+            padding: { bottom: 20 }
           },
           legend: {
             position: 'bottom',
-            labels: { padding: 15 }
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              font: { family: "'Inter', sans-serif", size: 13 },
+              color: '#475569'
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            titleFont: { size: 13, family: "'Inter', sans-serif" },
+            bodyFont: { size: 14, weight: 'bold', family: "'Inter', sans-serif" },
+            callbacks: {
+              label: (context) => ` ${context.label}: ${context.parsed} véhicule(s)`
+            }
           }
         }
       }

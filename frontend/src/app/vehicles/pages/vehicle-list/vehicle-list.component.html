@@ -48,7 +48,7 @@
       <table class="members-table">
         <thead>
           <tr>
-            <th>Icône</th>
+            <th class="col-icon">Icône</th>
             <th>Véhicule</th>
             <th class="hide-mobile">Matricule</th>
             <th class="hide-mobile">Type</th>
@@ -56,13 +56,18 @@
             <th class="hide-mobile">Assur.</th>
             <th class="hide-mobile">Visite.</th>
             <th class="hide-mobile">Vign.</th>
-            <th>Statut</th>
+            <th class="col-status">Statut</th>
             <th *ngIf="isAdmin || isResponsable" style="text-align: center;">Opérations</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let veh of filteredVehicles">
-            <td>
+          <tr *ngFor="let veh of filteredVehicles"
+              [ngClass]="{
+                'status-disponible': veh.statut === 'Disponible',
+                'status-maintenance': veh.statut === 'En maintenance',
+                'status-affecte': veh.statut === 'Affecté'
+              }">
+            <td class="col-icon">
               <div class="avatar-cell" style="background: #f1f5f9;">
                 <svg fill="currentColor" viewBox="0 0 24 24"
                   style="color: #64748b; padding: 6px; width: 100%; height: 100%;">
@@ -91,7 +96,7 @@
             <td class="hide-mobile">{{ veh.vignette_date ? (veh.vignette_date | date:'dd/MM/yy') : '--' }}</td>
 
             <!-- ═══════════════ COLONNE STATUT ═══════════════ -->
-            <td>
+            <td class="col-status">
               <!-- Badge statut principal -->
               <span class="role-pill"
                 [ngClass]="{

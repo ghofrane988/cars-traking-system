@@ -78,30 +78,22 @@
         <div class="g-card blue-g">
           <div class="g-card-content">
             <h3>Véhicules Actifs Aujourd'hui</h3>
-            <p>{{ (dashboardData?.active_today?.count ?? 0) }} véhicules en maintenance ou affectés en mission.</p>
+            <p>{{ dashboardData.active_today.count }} véhicules en maintenance ou affectés en mission.</p>
             <div class="g-creator">En cours d'utilisation</div>
           </div>
           <div class="g-card-icon" style="color: #1d4ed8;">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+              </path>
             </svg>
           </div>
         </div>
-
-        <!-- 🔧 Maintenances cette semaine -->
-        <div class="g-card yellow-g">
-          <div class="g-card-content">
-            <h3>Maintenances Cette Semaine</h3>
-            <p>{{ (dashboardData?.maintenances_this_week?.count ?? 0) }} maintenances planifiées cette semaine.</p>
-            <div class="g-creator">À surveiller</div>
-          </div>
-          <div class="g-card-icon" style="color: #b45309;">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
+      </div>
+      <!-- 📈 Courbe 7 jours -->
+      <div class="charts-section">
+        <h2 class="section-title">Évolution Réservations </h2>
+        <div class="chart-card wide-chart">
+          <canvas #weeklyTrendChart></canvas>
         </div>
       </div>
 
@@ -118,16 +110,10 @@
         </div>
       </div>
 
-      <!-- 📈 Courbe 7 jours -->
-      <div class="charts-section">
-        <h2 class="section-title">Évolution Réservations (7 derniers jours)</h2>
-        <div class="chart-card wide-chart">
-          <canvas #weeklyTrendChart></canvas>
-        </div>
-      </div>
+
 
       <!-- 🗺️ Heatmap destinations -->
-      <div class="section-block" *ngIf="(dashboardData?.destination_heatmap?.length ?? 0) > 0">
+      <div class="section-block" *ngIf="dashboardData.destination_heatmap.length > 0">
         <h2 class="section-title">Zones les Plus Demandées</h2>
         <div #heatmapMap style="height: 320px; border-radius: 16px; overflow: hidden;"></div>
       </div>
@@ -145,9 +131,9 @@
           </thead>
           <tbody>
             <tr *ngFor="let res of dashboardData.pending_reservations">
-              <td>{{ res.employee?.nom }}</td>
-              <td>{{ res.mission }}</td>
-              <td><a routerLink="/reservations" [queryParams]="{filter: 'pending', focus: res.id}"
+              <td data-label="Employé">{{ res.employee?.nom }}</td>
+              <td data-label="Mission">{{ res.mission }}</td>
+              <td data-label="Action"><a routerLink="/reservations" [queryParams]="{filter: 'pending', focus: res.id}"
                   class="action-link">Valider →</a></td>
             </tr>
           </tbody>
@@ -155,7 +141,7 @@
       </div>
 
       <!-- 🛡️ Assurances expirantes -->
-      <div *ngIf="(dashboardData?.insurance_expiring?.length ?? 0) > 0" class="section-block">
+      <div *ngIf="dashboardData.insurance_expiring.length > 0" class="section-block">
         <h2 class="section-title">Assurances Expirantes (30 jours)</h2>
         <table class="modern-table">
           <thead>
@@ -169,15 +155,16 @@
           </thead>
           <tbody>
             <tr *ngFor="let v of dashboardData.insurance_expiring" [class.expired-row]="v.is_expired">
-              <td>{{ v.marque }} {{ v.modele }}</td>
-              <td>{{ v.matricule }}</td>
-              <td>{{ v.assurance_date | date:'dd/MM/yyyy' }}</td>
-              <td>
-                <span class="badge-insurance" [class.expired]="v.is_expired" [class.urgent]="v.days_until_expiry >= 0 && v.days_until_expiry <= 7">
+              <td data-label="Véhicule">{{ v.marque }} {{ v.modele }}</td>
+              <td data-label="Matricule">{{ v.matricule }}</td>
+              <td data-label="Date d'expiration">{{ v.assurance_date | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Jours restants">
+                <span class="badge-insurance" [class.expired]="v.is_expired"
+                  [class.urgent]="v.days_until_expiry >= 0 && v.days_until_expiry <= 7">
                   {{ v.is_expired ? 'Expirée' : v.days_until_expiry + ' j' }}
                 </span>
               </td>
-              <td>
+              <td data-label="Statut">
                 <span *ngIf="v.is_expired" class="status-dot red"></span>
                 <span *ngIf="!v.is_expired && v.days_until_expiry <= 7" class="status-dot orange"></span>
                 <span *ngIf="!v.is_expired && v.days_until_expiry > 7" class="status-dot yellow"></span>
@@ -188,7 +175,7 @@
       </div>
 
       <!-- 🔧 Maintenances cette semaine -->
-      <div *ngIf="(dashboardData?.maintenances_this_week?.count ?? 0) > 0" class="section-block">
+      <div *ngIf="dashboardData.maintenances_this_week.count > 0" class="section-block">
         <h2 class="section-title">Maintenances Cette Semaine</h2>
         <table class="modern-table">
           <thead>
@@ -200,18 +187,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let v of dashboardData.maintenances_this_week?.list">
-              <td>{{ v.marque }} {{ v.modele }}</td>
-              <td>{{ v.matricule }}</td>
-              <td>{{ v.maintenance_start_date | date:'dd/MM HH:mm' }}</td>
-              <td>{{ v.maintenance_end_date ? (v.maintenance_end_date | date:'dd/MM HH:mm') : '--' }}</td>
+            <tr *ngFor="let v of dashboardData.maintenances_this_week.list">
+              <td data-label="Véhicule">{{ v.marque }} {{ v.modele }}</td>
+              <td data-label="Matricule">{{ v.matricule }}</td>
+              <td data-label="Début">{{ v.maintenance_start_date | date:'dd/MM HH:mm' }}</td>
+              <td data-label="Fin">{{ v.maintenance_end_date ? (v.maintenance_end_date | date:'dd/MM HH:mm') : '--' }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- 🚗 Véhicules actifs aujourd'hui -->
-      <div *ngIf="(dashboardData?.active_today?.count ?? 0) > 0" class="section-block">
+      <div *ngIf="dashboardData.active_today.count > 0" class="section-block">
         <h2 class="section-title">Véhicules Actifs Aujourd'hui</h2>
         <table class="modern-table">
           <thead>
@@ -222,10 +210,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let v of dashboardData.active_today?.list">
-              <td>{{ v.marque }} {{ v.modele }}</td>
-              <td>{{ v.matricule }}</td>
-              <td>
+            <tr *ngFor="let v of dashboardData.active_today.list">
+              <td data-label="Véhicule">{{ v.marque }} {{ v.modele }}</td>
+              <td data-label="Matricule">{{ v.matricule }}</td>
+              <td data-label="Statut actuel">
                 <span class="status-pill" [class.maintenance]="v.statut === 'En maintenance'"
                   [class.affecte]="v.statut === 'Affecté'">
                   {{ v.statut }}

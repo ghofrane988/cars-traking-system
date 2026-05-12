@@ -1,4 +1,4 @@
-﻿<div class="reservation-container" [class.full-screen]="viewMode === 'calendar' || isAdmin">
+<div class="reservation-container" [class.full-screen]="viewMode === 'calendar' || isAdmin">
 
   <!-- Header Section mirroring modern dashboard style -->
   <div class="header">
@@ -124,12 +124,13 @@
                 <th class="hide-mobile">Dates</th>
                 <th class="hide-mobile">Mission</th>
                 <th class="hide-mobile">Type demandé</th>
-                <th>Statut</th>
+                <th class="col-status">Statut</th>
                 <th style="text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let r of filteredReservations">
+              <tr *ngFor="let r of filteredReservations"
+                [ngClass]="'status-' + r.status">
                 <td>
                   <div class="vehicle-cell">
                     <span class="v-name" *ngIf="r.vehicle">{{ r.vehicle.marque }} {{ r.vehicle.modele }}</span>
@@ -151,7 +152,7 @@
                   </span>
                   <span *ngIf="!r.requested_vehicle_type" style="color: #94a3b8; font-size: 0.85rem;">-</span>
                 </td>
-                <td>
+                <td class="col-status">
                   <span class="status-pill" [class]="r.status">
                     {{ getStatusLabel(r.status) }}
                   </span>

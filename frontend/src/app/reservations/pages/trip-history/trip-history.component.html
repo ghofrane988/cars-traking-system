@@ -27,7 +27,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let res of completedReservations">
+            <tr *ngFor="let res of completedReservations" class="status-completed">
               <td>{{ res.employee?.nom }}</td>
               <td>{{ res.vehicle?.marque }} {{ res.vehicle?.modele }}</td>
               <td class="hide-mobile">{{ res.mission }}</td>
