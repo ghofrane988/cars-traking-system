@@ -28,7 +28,7 @@ Route::post('/reset-password', [EmployeeController::class, 'resetPassword']);
 // Public route for mobile app GPS tracking
 Route::post('/mobile/gps-locations', [GpsLocationController::class, 'store']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'first_login'])->group(function () {
     Route::post('/first-login-pass', [EmployeeController::class, 'setFirstLoginPassword']);
 
     Route::get('/user', fn($r) => $r->user());
